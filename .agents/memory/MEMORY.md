@@ -1,0 +1,1 @@
+- [Browser smoke testing](browser-smoke-testing.md) — Chromium needs both the binary and native Nix runtime libraries in this workspace.
