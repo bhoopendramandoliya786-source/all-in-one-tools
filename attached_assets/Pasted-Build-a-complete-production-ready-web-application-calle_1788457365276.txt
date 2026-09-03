@@ -1,0 +1,394 @@
+Build a complete production-ready web application called “All in One Tools”.
+
+IMPORTANT:
+This is a completely NEW project. Do not create anything related to EducationPlatform.
+The website must follow a modern, clean, professional, mobile-first design similar to the reference design we discussed.
+
+MAIN GOAL:
+Create one website containing 69 genuinely working online utility tools.
+Basic tools must be FREE.
+Do NOT use paid APIs or external AI APIs.
+Whenever possible, process files directly in the user's browser using JavaScript/Web APIs and open-source npm libraries.
+
+TECH STACK:
+- Next.js with App Router
+- React
+- JavaScript
+- Tailwind CSS
+- Use modern reusable components
+- Use npm packages only when necessary
+- No paid API
+- No fake functionality
+- No placeholder buttons for the tools
+- The project must run correctly with npm run dev and npm run build
+
+BRAND:
+Name: All in One Tools
+Tagline: “Simple Tools. Real Results.”
+Main hero text:
+“Har Kaam Ke Liye Ek Tool.”
+Subtext:
+“69+ Free Online Tools — Fast, Simple & Useful”
+
+DESIGN:
+Create a premium-looking modern UI.
+Use a clean white/light interface with blue as the main accent and subtle gradients.
+Cards should have rounded corners, shadows, clear icons and good spacing.
+Make the website excellent on Android/mobile screens as well as desktop.
+Do not overcrowd the interface.
+Use accessible buttons, labels, focus states and readable typography.
+
+HOME PAGE:
+Create:
+
+1. Header
+- All in One Tools logo/name
+- Home
+- All Tools
+- Categories
+- About
+- Contact
+- Search
+- Theme toggle
+- Mobile hamburger menu
+
+2. Hero section
+- “Har Kaam Ke Liye Ek Tool.”
+- “69+ Free Online Tools — Fast, Simple & Useful”
+- Large tool search box
+- Search should actually work
+- Popular search chips
+
+3. Trust/benefit section
+- 100% Free Basic Tools
+- Fast & Easy
+- Works on Mobile & Desktop
+- Privacy Friendly
+
+4. Browse by Category
+Categories:
+- PDF Tools
+- Image Tools
+- Text Tools
+- Calculators
+- Generators
+- Converters & Utilities
+
+5. Popular Tools section
+
+6. Today’s Useful Tool section
+
+7. Quick Tools section
+
+8. Recently Used section
+Use localStorage so it actually remembers recently used tools on the user's device.
+
+9. Favorites section
+Allow users to favorite/unfavorite tools and save this in localStorage.
+
+10. All Tools section
+Show all 69 tools with category filters and search.
+
+11. Footer
+Include:
+- About
+- All Tools
+- Categories
+- Contact
+- Privacy Policy
+- Terms of Service
+- Disclaimer
+
+TOOL PAGE REQUIREMENTS:
+Every tool must have its own route/page.
+
+Example:
+ /tools/pdf-merge
+ /tools/image-resize
+ /tools/word-counter
+
+Each tool page must contain:
+- Breadcrumb
+- Tool icon
+- Tool name
+- Short description
+- Input area
+- Working controls
+- Process button
+- Progress/loading state when needed
+- Result area
+- Download/Copy button where appropriate
+- Reset button
+- Error handling
+- Privacy message when files are processed locally
+- Related tools
+- Favorite button
+
+IMPORTANT:
+Do not make fake “Processing” animations.
+The actual operation must happen.
+
+69 TOOLS:
+
+PDF TOOLS — 10
+1. PDF Merge
+2. PDF Split
+3. PDF Compress
+4. PDF to Images
+5. Images to PDF
+6. PDF Rotate
+7. PDF Delete Pages
+8. PDF Extract Pages
+9. PDF Watermark
+10. PDF Metadata Remover
+
+IMAGE TOOLS — 15
+11. Image Resize
+12. Image Compress
+13. JPG to PNG
+14. PNG to JPG
+15. WebP Converter
+16. Image Crop
+17. Image Rotate
+18. Image Flip
+19. Image Grayscale
+20. Image Blur
+21. Image Sharpen
+22. Image Brightness
+23. Image Contrast
+24. Image Watermark
+25. Favicon Generator
+
+TEXT TOOLS — 10
+26. Word Counter
+27. Character Counter
+28. Case Converter
+29. Remove Extra Spaces
+30. Text Sorter
+31. Duplicate Line Remover
+32. Text Reverser
+33. Text Cleaner
+34. Slug Generator
+35. Lorem Ipsum Generator
+
+CALCULATORS — 15
+36. Percentage Calculator
+37. Age Calculator
+38. BMI Calculator
+39. Discount Calculator
+40. GST Calculator
+41. Profit/Loss Calculator
+42. EMI Calculator
+43. Simple Interest Calculator
+44. Compound Interest Calculator
+45. Date Difference Calculator
+46. Time Calculator
+47. Average Calculator
+48. Ratio Calculator
+49. Fraction Calculator
+50. Unit Converter
+
+GENERATORS & DEVELOPER UTILITIES — 10
+51. QR Code Generator
+52. Barcode Generator
+53. Password Generator
+54. UUID Generator
+55. Random Number Generator
+56. Color Picker
+57. HEX to RGB Converter
+58. Timestamp Converter
+59. JSON Formatter
+60. JSON Minifier
+
+CONVERTERS & OTHER UTILITIES — 9
+61. Number to Words
+62. Text Encrypt/Decrypt
+63. Base64 Encoder/Decoder
+64. URL Encoder/Decoder
+65. HTML Formatter
+66. CSS Formatter
+67. JavaScript Formatter
+68. XML Formatter
+69. YAML Formatter
+
+FUNCTIONALITY DETAILS:
+
+PDF:
+Use reliable browser-compatible libraries such as pdf-lib or other appropriate open-source libraries.
+PDF Merge must actually merge multiple PDFs.
+PDF Split must allow selecting pages and generating separate PDFs.
+PDF Rotate must actually rotate pages.
+PDF Delete/Extract pages must work.
+PDF watermark must add a watermark.
+PDF metadata remover must remove metadata where technically possible.
+PDF to Images should render pages to images where browser-compatible.
+Images to PDF must create a real downloadable PDF.
+
+IMAGE:
+Use browser Canvas APIs wherever possible.
+Users should be able to upload images.
+Image resize must allow width/height.
+Image compression must allow quality.
+Conversions must generate actual files.
+Crop must allow crop dimensions.
+Rotate/flip must work.
+Grayscale/blur/sharpen/brightness/contrast must actually modify image pixels.
+Watermark must add user-provided text.
+Favicon Generator should create favicon output.
+
+TEXT:
+All text tools must work instantly in the browser.
+Provide textarea, clear, copy and download where useful.
+Word count and character count must update live.
+
+CALCULATORS:
+All calculations must be real and accurate.
+Validate input.
+Handle division by zero and invalid values.
+Show formulas/results clearly.
+Do not use fake sample results as the actual result.
+
+GENERATORS:
+QR generator must generate real QR codes.
+Barcode generator must generate real barcodes.
+Password generator must use secure browser randomness where possible.
+UUID generator must generate valid UUIDs.
+Random number generator must work.
+Color picker must allow selecting colors and show HEX/RGB.
+Timestamp converter must support useful date/time conversions.
+JSON formatter/minifier must validate JSON and show useful errors.
+
+CONVERTERS/DEVELOPER UTILITIES:
+Number to Words should work for common numbers.
+Base64 encode/decode should work.
+URL encode/decode should work.
+HTML/CSS/JavaScript/XML/YAML formatting should work using reliable open-source libraries where appropriate.
+Do not send user data to external services.
+
+PRIVACY:
+For browser-based file tools, process files locally whenever technically possible.
+Clearly tell users:
+“Your files are processed in your browser whenever possible and are not uploaded to our server.”
+Do not collect uploaded files.
+Do not add unnecessary tracking.
+
+SEARCH:
+Implement real tool search.
+Search by:
+- tool name
+- description
+- category
+Search results should update quickly.
+Show “No tools found” when appropriate.
+
+CATEGORIES:
+Each tool must belong to exactly one main category.
+Create category pages with:
+- category title
+- description
+- tool cards
+- search/filter
+- related categories
+
+LOCAL STORAGE:
+Use localStorage for:
+- Recently used tools
+- Favorites
+- Theme preference
+Do not require login for these features.
+
+ERROR HANDLING:
+Every tool must handle:
+- invalid input
+- missing file
+- unsupported file type
+- oversized file where appropriate
+- processing errors
+Show friendly messages instead of technical crashes.
+
+MOBILE:
+This is extremely important.
+The website must be designed for Android phones first.
+Buttons must be easy to tap.
+File upload areas must work on mobile.
+No horizontal scrolling.
+No elements should overlap.
+Navigation must work correctly.
+Tool result/download buttons must be accessible.
+
+SEO:
+Create proper metadata for:
+- Home page
+- Category pages
+- Every tool page
+Use meaningful titles and descriptions.
+Create sitemap and robots configuration where appropriate.
+Use semantic HTML.
+
+PERFORMANCE:
+Do not load unnecessary libraries globally.
+Use dynamic imports where useful.
+Keep client-side processing optimized.
+Avoid huge unnecessary dependencies.
+Use reusable components instead of duplicating code.
+
+PROJECT STRUCTURE:
+Create a clean scalable structure such as:
+app/
+components/
+lib/
+public/
+data/
+styles/
+
+Create a central tools data/configuration file containing:
+- id
+- name
+- slug
+- category
+- description
+- icon
+- keywords
+- route
+
+Create reusable:
+- Header
+- Footer
+- ToolCard
+- ToolLayout
+- SearchBar
+- CategoryCard
+- FileUploader
+- ResultPanel
+- FavoriteButton
+- RecentTools
+- RelatedTools
+
+MONETIZATION:
+Do NOT add real ads yet.
+Create clean placeholders/components for future:
+- Advertisement areas
+- Premium features
+- Affiliate links
+- Paid advanced tools
+Do not use deceptive ads, fake download buttons or misleading UI.
+
+IMPORTANT DEVELOPMENT RULE:
+Do not stop after creating only the homepage.
+Build the complete application and implement the actual functionality for all 69 tools.
+If a feature needs an npm package, install a suitable open-source package.
+Do not replace functionality with a placeholder saying “coming soon”.
+
+Before finishing:
+1. Test all routes.
+2. Test all 69 tools.
+3. Fix console errors.
+4. Fix broken imports.
+5. Fix mobile layout issues.
+6. Run npm run build.
+7. Fix all build errors.
+8. Make sure the homepage links correctly to every tool.
+9. Make sure every tool has a working reset/result flow.
+10. Make sure the final project is ready to deploy.
+
+Start by creating the complete project structure, design system, homepage, tool registry, category pages and reusable components, then implement all 69 tools using the architecture above.

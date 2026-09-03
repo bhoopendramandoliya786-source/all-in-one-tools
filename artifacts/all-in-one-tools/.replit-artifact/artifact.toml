@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "All in One Tools"
+description = "A fast, privacy-friendly toolbox with 69 genuinely useful browser-based utilities for files, images, text, calculations, generation, conversion, and developer workflows."
+version = "1.0.0"
+id = "artifacts/all-in-one-tools"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20296
+
+[services.development]
+run = "pnpm --filter @workspace/all-in-one-tools run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/all-in-one-tools", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/all-in-one-tools/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20296"
+BASE_PATH = "/"
