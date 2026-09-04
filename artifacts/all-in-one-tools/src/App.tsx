@@ -48,7 +48,7 @@ function Header() {
     if (query.trim()) setLocation(`/tools?search=${encodeURIComponent(query.trim())}`);
   };
   return (
-    <header className="sticky top-0 z-40 border-b border-border/80 bg-background/95">
+    <header className="sticky top-0 z-40 border-b border-border/80 bg-background/95 backdrop-blur">
       <div className="mx-auto flex h-[4.5rem] max-w-7xl items-center gap-4 px-4 sm:px-6">
         <Link href="/" data-testid="link-brand" className="group flex shrink-0 items-center gap-2.5">
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm transition-transform group-hover:rotate-[-6deg]">
@@ -92,12 +92,12 @@ function Header() {
 function Footer() {
   return (
     <footer className="mt-20 border-t border-border bg-secondary/35">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1.5fr_1fr_1fr]">
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-4">
         <div>
           <div className="flex items-center gap-2 font-display font-bold">
             <span className="grid h-7 w-7 place-items-center rounded-lg bg-primary text-primary-foreground"><Zap size={14} fill="currentColor" /></span> all in one tools
           </div>
-          <p className="mt-3 max-w-xs text-sm leading-6 text-muted-foreground">Small tools for the work between the big tasks. Private by default, useful by design.</p>
+          <p className="mt-3 max-w-xs text-sm leading-6 text-muted-foreground">Free, lightweight tools running directly in your browser. Private by default, useful by design.</p>
         </div>
         <div>
           <p className="mb-3 text-xs font-bold uppercase tracking-[.16em] text-muted-foreground">Explore</p>
@@ -105,17 +105,26 @@ function Footer() {
             <Link href="/tools" data-testid="footer-link-tools" className="hover:text-primary">All tools</Link>
             <Link href={categoryPath('Calculators')} data-testid="footer-link-calculators" className="hover:text-primary">Calculators</Link>
             <Link href={categoryPath('Text Tools')} data-testid="footer-link-text" className="hover:text-primary">Text tools</Link>
+            <Link href={categoryPath('PDF Tools')} className="hover:text-primary">PDF tools</Link>
           </div>
         </div>
         <div>
-          <p className="mb-3 text-xs font-bold uppercase tracking-[.16em] text-muted-foreground">The promise</p>
+          <p className="mb-3 text-xs font-bold uppercase tracking-[.16em] text-muted-foreground">Legal & Policies</p>
+          <div className="grid gap-2 text-sm">
+            <Link href="/privacy-policy" className="hover:text-primary">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-primary">Terms of Service</Link>
+            <Link href="/contact" className="hover:text-primary">Contact Us</Link>
+          </div>
+        </div>
+        <div>
+          <p className="mb-3 text-xs font-bold uppercase tracking-[.16em] text-muted-foreground">The Promise</p>
           <p className="font-display text-lg font-bold">Simple tools.<br />Real results.</p>
-          <p className="mt-2 text-xs text-muted-foreground">No account. No upload. No fuss.</p>
+          <p className="mt-2 text-xs text-muted-foreground">100% Client-side. No files stored on remote servers.</p>
         </div>
       </div>
       <div className="mx-auto flex max-w-7xl items-center justify-between border-t border-border px-4 py-5 text-xs text-muted-foreground sm:px-6">
-        <span>© 2025 All in One Tools</span>
-        <span className="flex items-center gap-1.5"><ShieldCheck size={14} className="text-primary" /> Runs in your browser</span>
+        <span>© 2026 All in One Tools. All rights reserved.</span>
+        <span className="flex items-center gap-1.5"><ShieldCheck size={14} className="text-primary" /> Runs locally in your browser</span>
       </div>
     </footer>
   );
@@ -806,7 +815,6 @@ function PdfTool({ tool }: { tool: Tool }) {
 function ToolPage() {
   const { slug } = useParams<{ slug: string }>();
   const tool = toolBySlug[slug || ''];
-  const [favorite, setFavorite] = useState(() => JSON.parse(localStorage.getItem('ait-favorites') || '[]').includes(slug));
 
   if (!tool) return <NotFound />;
   const Icon = getIcon(tool.icon);
@@ -820,7 +828,7 @@ function ToolPage() {
 
   return (
     <Shell>
-      <PageMeta title={tool.name} description={tool.description} />
+      <PageMeta title={tool.name} description={`${tool.description} Free, instant, and runs privately in your web browser.`} />
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 md:py-12">
         <div className="flex items-center gap-4">
           <span className="grid h-12 w-12 place-items-center rounded-xl bg-primary text-primary-foreground"><Icon size={22} /></span>
@@ -829,7 +837,92 @@ function ToolPage() {
             <p className="text-sm text-muted-foreground">{tool.description}</p>
           </div>
         </div>
+        
         <div className="mt-8 rounded-2xl border border-border bg-card p-5">{toolView}</div>
+
+        {/* Dynamic SEO Content Block */}
+        <section className="mt-14 max-w-4xl border-t border-border pt-10 text-foreground">
+          <h2 className="font-display text-2xl font-bold">About {tool.name}</h2>
+          <p className="mt-3 text-sm leading-7 text-muted-foreground">
+            {tool.name} is a free, high-performance browser utility designed to help you handle your tasks instantly without installing complex software. All calculations and operations execute entirely in your browser using modern WebAssembly and JavaScript engines, ensuring total privacy for your documents and sensitive inputs.
+          </p>
+
+          <h3 className="mt-8 font-display text-lg font-bold">How to use {tool.name}</h3>
+          <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm leading-6 text-muted-foreground">
+            <li>Provide your input, values, or select your files in the tool box above.</li>
+            <li>Configure any custom settings or formatting options required for your output.</li>
+            <li>Click the action button to process and copy or download your result instantly.</li>
+          </ol>
+
+          <h3 className="mt-8 font-display text-lg font-bold">Frequently Asked Questions</h3>
+          <div className="mt-4 space-y-4">
+            <div className="rounded-xl border border-border bg-card p-4">
+              <p className="font-semibold text-sm">Is {tool.name} completely free to use?</p>
+              <p className="mt-1 text-xs text-muted-foreground leading-5">Yes, all tools on All in One Tools are 100% free with no hidden charges, limitations, or account sign-up requirements.</p>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-4">
+              <p className="font-semibold text-sm">Is my data secure when using this tool?</p>
+              <p className="mt-1 text-xs text-muted-foreground leading-5">Yes. Unlike server-based online converters, this tool runs 100% client-side inside your local browser sandbox. Your data and files never leave your device.</p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </Shell>
+  );
+}
+
+function PrivacyPolicy() {
+  return (
+    <Shell>
+      <PageMeta title="Privacy Policy" description="Read our transparent client-side privacy policy." />
+      <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
+        <h1 className="font-display text-3xl font-bold">Privacy Policy</h1>
+        <p className="mt-2 text-xs text-muted-foreground">Last updated: September 2026</p>
+        <div className="mt-6 space-y-5 text-sm leading-7 text-muted-foreground">
+          <p>At <strong>All in One Tools</strong>, accessible from ait-tools.vercel.app, your privacy is our top priority. We maintain a zero-knowledge architecture.</p>
+          <h2 className="font-display text-lg font-bold text-foreground">1. Client-Side Data Processing</h2>
+          <p>All processing of text, documents, PDFs, and images occurs strictly within your browser via JavaScript and HTML5 APIs. None of the files or text you upload are transferred to or stored on our servers.</p>
+          <h2 className="font-display text-lg font-bold text-foreground">2. Cookies & Analytics</h2>
+          <p>We do not use tracking cookies to gather personal identity details. We utilize privacy-friendly, anonymized traffic measurement (Vercel Web Analytics) purely to monitor site uptime and popular page requests without storing user IP addresses.</p>
+          <h2 className="font-display text-lg font-bold text-foreground">3. Third-Party Advertising</h2>
+          <p>Third-party vendors, including Google, may serve advertisements on this website using cookies to display ads based on prior visits. Users may opt out of personalized advertising by visiting Google Ads Settings.</p>
+        </div>
+      </main>
+    </Shell>
+  );
+}
+
+function Terms() {
+  return (
+    <Shell>
+      <PageMeta title="Terms of Service" description="Terms of service and usage conditions." />
+      <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
+        <h1 className="font-display text-3xl font-bold">Terms of Service</h1>
+        <p className="mt-2 text-xs text-muted-foreground">Last updated: September 2026</p>
+        <div className="mt-6 space-y-5 text-sm leading-7 text-muted-foreground">
+          <p>By using <strong>All in One Tools</strong>, you agree to these terms. All utilities are provided "as is", without any warranties of any kind.</p>
+          <h2 className="font-display text-lg font-bold text-foreground">Permitted Use</h2>
+          <p>You may use these utilities freely for personal, educational, or commercial purposes. You agree not to attempt to disrupt or abuse the service through malicious automated traffic.</p>
+          <h2 className="font-display text-lg font-bold text-foreground">Disclaimer of Liability</h2>
+          <p>While we test calculations and algorithms for precision, All in One Tools shall not be held liable for any damages or inaccuracies resulting from the use of our calculators or file manipulation tools.</p>
+        </div>
+      </main>
+    </Shell>
+  );
+}
+
+function Contact() {
+  return (
+    <Shell>
+      <PageMeta title="Contact Us" description="Get in touch with the All in One Tools team." />
+      <main className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
+        <h1 className="font-display text-3xl font-bold">Contact Us</h1>
+        <p className="mt-3 text-sm text-muted-foreground">Have feedback, discovered a bug, or want to suggest a new tool? We'd love to hear from you.</p>
+        <div className="mt-6 rounded-2xl border border-border bg-card p-6">
+          <p className="text-sm font-semibold">Email Support:</p>
+          <p className="mt-1 font-mono-app text-primary text-sm">support@ait-tools.vercel.app</p>
+          <p className="mt-4 text-xs text-muted-foreground">We usually review tool suggestions and bug reports within 24–48 hours.</p>
+        </div>
       </main>
     </Shell>
   );
@@ -864,6 +957,9 @@ function Router() {
         <Route path="/tools" component={ToolsPage} />
         <Route path="/categories/:category" component={CategoryPage} />
         <Route path="/tools/:slug" component={ToolPage} />
+        <Route path="/privacy-policy" component={PrivacyPolicy} />
+        <Route path="/terms" component={Terms} />
+        <Route path="/contact" component={Contact} />
         <Route component={NotFound} />
       </Switch>
     </ErrorBoundary>
