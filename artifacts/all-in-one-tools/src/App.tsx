@@ -946,164 +946,6 @@ function ImageTool({ tool }: { tool: Tool }) {
   );
 }
 
-// 6. BASE PDF UTILITIES
-function parsePageSelection(value: string, total: number) {
-  const pages = new Set<number>();
-  value.split(',').map((p) => p.trim()).filter(Boolean).forEach((part) => {
-    const [start, end] = part.split('-').map((n) => Number(n.trim()));
-    if (Number.isInteger(start) && start >= 1) {
-      const e = Number.isInteger(end) ? Math.min(total, end) : start;
-      for (let i = start; i <= e; i++) if (i <= total) pages.add(i - 1);
-    }
-  });
-  return [...pages].sort((a, b) => a - b);
-}
-
-function PdfTool({ tool }: { tool: Tool }) {
-  const [files, setFiles] = useState<File[]>([]);
-  const [pages, setPages] = useState('1');
-  const [watermark, setWatermark] = useState('CONFIDENTIAL');
-  const [results, setResults] = useState<{ name: string; url: string }[]>([]);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-
-  const isImgToPdf = tool.slug === 'images-to-pdf';
-
-  const process = async () => {
-    setError(''); setResults([]);
-    if (!files.length) { setError('Please select file(s) first.'); return; }
-    setBusy(true);
-
-    try {
-      const { PDFDocument, StandardFonts, rgb, degrees } = await import('pdf-lib');
-
-      if (isImgToPdf) {
-        const doc = await PDFDocument.create();
-        for (const file of files) {
-          const imgBytes = await file.arrayBuffer();
-          const image = file.type === 'image/png' ? await doc.embedPng(imgBytes) : await doc.embedJpg(imgBytes);
-          const page = doc.addPage([image.width, image.height]);
-          page.drawImage(image, { x: 0, y: 0, width: image.width, height: image.height });
-        }
-        const bytes = await doc.save();
-        setResults([{ name: 'images-combined.pdf', url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
-        setBusy(false);
-        return;
-      }
-
-      if (tool.slug === 'pdf-merge') {
-        const mergedPdf = await PDFDocument.create();
-        for (const file of files) {
-          const doc = await PDFDocument.load(await file.arrayBuffer());
-          const copied = await mergedPdf.copyPages(doc, doc.getPageIndices());
-          copied.forEach((p) => mergedPdf.addPage(p));
-        }
-        const bytes = await mergedPdf.save();
-        setResults([{ name: 'merged-document.pdf', url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
-      } else {
-        const source = await PDFDocument.load(await files[0].arrayBuffer());
-
-        if (tool.slug === 'pdf-split' || tool.slug === 'pdf-extract-pages') {
-          const selected = parsePageSelection(pages, source.getPageCount());
-          if (!selected.length) throw new Error('Specify pages like 1 or 1-3.');
-          const out = await PDFDocument.create();
-          const copied = await out.copyPages(source, selected);
-          copied.forEach((p) => out.addPage(p));
-          const bytes = await out.save();
-          setResults([{ name: `${tool.slug}-pages.pdf`, url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
-        } else if (tool.slug === 'pdf-delete-pages') {
-          const toDelete = new Set(parsePageSelection(pages, source.getPageCount()));
-          const keepIndices = source.getPageIndices().filter((idx) => !toDelete.has(idx));
-          if (!keepIndices.length) throw new Error('Cannot delete all pages.');
-          const out = await PDFDocument.create();
-          const copied = await out.copyPages(source, keepIndices);
-          copied.forEach((p) => out.addPage(p));
-          const bytes = await out.save();
-          setResults([{ name: 'pages-removed.pdf', url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
-        } else if (tool.slug === 'pdf-rotate') {
-          source.getPages().forEach((p) => p.setRotation(degrees((p.getRotation().angle + 90) % 360)));
-          const bytes = await source.save();
-          setResults([{ name: 'rotated.pdf', url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
-        } else if (tool.slug === 'pdf-watermark') {
-          const font = await source.embedFont(StandardFonts.HelveticaBold);
-          source.getPages().forEach((p) => {
-            const { width, height } = p.getSize();
-            p.drawText(watermark || 'CONFIDENTIAL', { x: width * 0.2, y: height * 0.5, size: 40, font, rotate: degrees(45), color: rgb(0.7, 0.7, 0.7), opacity: 0.35 });
-          });
-          const bytes = await source.save();
-          setResults([{ name: 'watermarked.pdf', url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
-        } else {
-          source.setTitle('');
-          source.setAuthor('');
-          source.setSubject('');
-          source.setKeywords([]);
-          source.setProducer('');
-          source.setCreator('');
-          const bytes = await source.save({ useObjectStreams: true });
-          setResults([{ name: `${tool.slug}.pdf`, url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
-        }
-      }
-    } catch (err: any) {
-      setError(err?.message || 'Failed to process PDF.');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const reset = () => {
-    results.forEach((r) => URL.revokeObjectURL(r.url));
-    setResults([]);
-    setFiles([]);
-    setError('');
-  };
-
-  return (
-    <div className="max-w-2xl">
-      <label className="flex min-h-[160px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card p-4 hover:border-primary/60">
-        <input type="file" accept={isImgToPdf ? 'image/*' : '.pdf'} multiple={tool.slug === 'pdf-merge' || isImgToPdf} onChange={(e) => setFiles(Array.from(e.target.files || []))} className="sr-only" />
-        <Upload size={24} className="text-primary" />
-        <span className="mt-2 text-sm font-bold">{files.length ? `${files.length} file(s) selected` : isImgToPdf ? 'Choose Image(s) to combine' : 'Choose PDF file(s)'}</span>
-      </label>
-
-      {files.length > 0 && (
-        <div className="mt-3 space-y-1">
-          {files.map((f, i) => <p key={i} className="text-xs text-muted-foreground truncate">📄 {f.name}</p>)}
-        </div>
-      )}
-
-      {(tool.slug === 'pdf-split' || tool.slug === 'pdf-extract-pages' || tool.slug === 'pdf-delete-pages') && (
-        <div className="mt-4"><Field label="Page Numbers / Range (e.g. 1, 3-5)" value={pages} onChange={setPages} placeholder="1, 3-5" /></div>
-      )}
-      {tool.slug === 'pdf-watermark' && (
-        <div className="mt-4"><Field label="Watermark Text" value={watermark} onChange={setWatermark} /></div>
-      )}
-
-      <div className="mt-4 flex gap-2">
-        <button onClick={process} disabled={busy} className="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground disabled:opacity-50">
-          {busy ? 'Processing...' : tool.name}
-        </button>
-        <button onClick={reset} className="rounded-xl border border-border px-4 py-3 text-sm font-bold text-muted-foreground hover:text-foreground">Reset</button>
-      </div>
-
-      {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
-
-      {results.length > 0 && (
-        <div className="mt-5 rounded-xl border border-primary/30 bg-primary/5 p-4">
-          <p className="text-xs font-bold uppercase tracking-wide text-primary">Download Ready</p>
-          {results.map((res, i) => (
-            <div key={i} className="mt-2 flex items-center justify-between">
-              <span className="text-sm font-semibold truncate">{res.name}</span>
-              <a href={res.url} download={res.name} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-bold text-primary-foreground">
-                <Download size={14} /> Download File
-              </a>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // =========================================================
 // CENTRAL CATEGORY-FIRST DYNAMIC ROUTER
 // =========================================================
@@ -1116,7 +958,6 @@ function ToolPage() {
 
   // 1. Slugs mapped to original built-in components
   const baseImageSlugs = ['image-resize','image-compress','jpg-to-png','png-to-jpg','webp-converter','image-crop','image-rotate','image-flip','image-grayscale','image-blur','image-sharpen','image-brightness','image-contrast','image-watermark','favicon-generator'];
-  const basePdfSlugs = ['pdf-merge','pdf-split','pdf-compress','pdf-to-images','images-to-pdf','pdf-rotate','pdf-delete-pages','pdf-extract-pages','pdf-watermark','pdf-metadata-remover'];
   const baseTextSlugs = ['word-counter','character-counter','case-converter','remove-extra-spaces','text-sorter','duplicate-line-remover','text-reverser','text-cleaner','slug-generator','lorem-ipsum-generator'];
   const baseDevSlugs = ['qr-code-generator','barcode-generator','password-generator','uuid-generator','random-number-generator','color-picker','hex-to-rgb-converter','timestamp-converter','number-to-words'];
   const baseCodeSlugs = ['json-formatter','json-minifier','html-formatter','css-formatter','javascript-formatter','xml-formatter','yaml-formatter','base64-encoder-decoder','url-encoder-decoder','text-encrypt-decrypt'];
@@ -1131,13 +972,14 @@ function ToolPage() {
     'home-loan-prepayment', 'sukanya-samriddhi'
   ];
 
-  // CATEGORY-FIRST SMART ROUTING (NO FALLBACK ACCIDENTAL CALCULATORS)
+  // CATEGORY-FIRST SMART ROUTING
   let toolView;
 
-  if (tool.category === 'Image Tools') {
+  // ALL 25 PDF Tools directly powered by AdvancedPdfTool
+  if (tool.category === 'PDF Tools') {
+    toolView = <AdvancedPdfTool tool={tool} />;
+  } else if (tool.category === 'Image Tools') {
     toolView = baseImageSlugs.includes(tool.slug) ? <ImageTool tool={tool} /> : <ExtraImageTool tool={tool} />;
-  } else if (tool.category === 'PDF Tools') {
-    toolView = basePdfSlugs.includes(tool.slug) ? <PdfTool tool={tool} /> : <AdvancedPdfTool tool={tool} />;
   } else if (tool.category === 'Text Tools') {
     toolView = baseTextSlugs.includes(tool.slug) ? <TextTool tool={tool} /> : <SeoTextTool tool={tool} />;
   } else if (tool.category === 'Generators & Developer Utilities') {
