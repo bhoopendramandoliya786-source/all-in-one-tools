@@ -1,2 +1,4 @@
 User-agent: *
 Allow: /
+
+Sitemap: https://ait-tools.vercel.app/sitemap.xml
