@@ -15,9 +15,12 @@ localPort = 20296
 run = "pnpm --filter @workspace/all-in-one-tools run dev"
 
 [services.production]
-build = [ "pnpm", "--filter", "@workspace/all-in-one-tools", "run", "build" ]
-serve = "static"
-publicDir = "artifacts/all-in-one-tools/dist/public"
+
+[services.production.build]
+args = [ "pnpm", "--filter", "@workspace/all-in-one-tools", "run", "build" ]
+
+[services.production.run]
+args = [ "node", "artifacts/all-in-one-tools/server.mjs" ]
 
 [[services.production.rewrites]]
 from = "/*"
