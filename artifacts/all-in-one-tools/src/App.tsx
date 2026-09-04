@@ -11,13 +11,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { categories, categoryInfo, toolBySlug, tools, type Category, type Tool } from '@/data/tools';
 import {
-  calculateCAGR,
   calculateFractions,
-  calculateHRA,
-  calculateLumpsum,
-  calculatePPF,
-  calculateSIP,
-  calculateStockAverage,
   cipherText,
   convertUnits,
   formatCode,
@@ -28,6 +22,15 @@ import {
   simplifyRatio,
   transformText,
 } from '@/lib/tool-engine';
+
+// =========================================================
+// MODULAR TOOL IMPORTS (ONE-TIME REGISTRATION)
+// =========================================================
+import FinancialTool from '@/components/tools/financial-tools';
+import ExtraImageTool from '@/components/tools/extra-image-tools';
+import AdvancedPdfTool from '@/components/tools/advanced-pdf-tools';
+import SeoTextTool from '@/components/tools/seo-text-tools';
+import DevUtilityTool from '@/components/tools/dev-tools';
 
 const queryClient = new QueryClient();
 const iconMap: Record<string, LucideIcon> = { FileText, Image: ImageIcon, Type, Calculator, Terminal, ArrowLeftRight };
@@ -82,7 +85,7 @@ function Header() {
         </nav>
         <form onSubmit={submitSearch} className="ml-auto hidden max-w-[260px] flex-1 items-center gap-2 rounded-full border border-border bg-card px-3 py-2 sm:flex">
           <Search size={16} className="text-muted-foreground" />
-          <input value={query} onChange={(e) => setQuery(e.target.value)} className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground" placeholder="Search 84 tools..." />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground" placeholder={`Search ${tools.length} tools...`} />
           {query && <button type="button" onClick={() => setQuery('')} className="text-muted-foreground hover:text-foreground"><X size={14} /></button>}
         </form>
         <button aria-label="Toggle theme" onClick={toggleTheme} className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:border-primary hover:text-primary">
@@ -96,7 +99,7 @@ function Header() {
         <div className="border-t border-border bg-card px-4 py-3 md:hidden">
           <form onSubmit={submitSearch} className="mb-2 flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2">
             <Search size={16} className="text-muted-foreground" />
-            <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} className="min-w-0 flex-1 bg-transparent py-1 text-sm outline-none" placeholder="Search 84 tools" />
+            <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} className="min-w-0 flex-1 bg-transparent py-1 text-sm outline-none" placeholder={`Search ${tools.length} tools`} />
           </form>
           <Link onClick={() => setOpen(false)} href="/tools" className="block rounded-lg px-3 py-3 text-sm font-semibold">Browse all tools</Link>
           {categories.map((cat) => (
@@ -201,25 +204,25 @@ function Home() {
 
   return (
     <Shell>
-      <PageMeta title="Simple Tools. Real Results." description="84+ free, fast and private online utilities for everyday work." />
+      <PageMeta title="Simple Tools. Real Results." description={`${tools.length}+ free, fast and private online utilities for everyday work.`} />
       <main>
         <section className="relative overflow-hidden border-b border-border bg-primary text-primary-foreground">
           <div className="relative mx-auto grid max-w-7xl gap-10 px-4 pb-14 pt-14 sm:px-6 md:grid-cols-[1.1fr_.9fr] md:items-end md:pb-20 md:pt-20">
             <div>
               <p className="mb-5 flex items-center gap-2 font-mono-app text-[11px] uppercase tracking-[.2em] text-primary-foreground/70">
-                <span className="h-2 w-2 rounded-full bg-accent" /> 84+ tools, no file upload needed
+                <span className="h-2 w-2 rounded-full bg-accent" /> {tools.length}+ tools, no file upload needed
               </p>
               <h1 className="max-w-xl font-display text-[clamp(2.5rem,6vw,5rem)] font-bold leading-[1] tracking-[-.05em]">
                 Har Kaam Ke Liye<br /><span className="text-accent">Ek Tool.</span>
               </h1>
               <p className="mt-6 max-w-md text-base leading-7 text-primary-foreground/75">
-                Private, instant, and high-performance utilities that run completely inside your web browser.
+                Private, instant, and high-performance utilities running 100% inside your web browser.
               </p>
             </div>
             <div className="rounded-3xl border border-primary-foreground/15 bg-primary-foreground/[.08] p-3 shadow-xl">
               <form onSubmit={submit} className="flex items-center gap-3 rounded-2xl bg-background p-2 text-foreground">
                 <Search className="ml-2 text-muted-foreground" size={21} />
-                <input value={heroSearch} onChange={(e) => setHeroSearch(e.target.value)} className="min-w-0 flex-1 bg-transparent px-1 py-3 text-sm outline-none placeholder:text-muted-foreground" placeholder="Search 84 tools (e.g. sip, byaj, 20kb, photo to pdf)..." />
+                <input value={heroSearch} onChange={(e) => setHeroSearch(e.target.value)} className="min-w-0 flex-1 bg-transparent px-1 py-3 text-sm outline-none placeholder:text-muted-foreground" placeholder={`Search ${tools.length} tools (e.g. sip, byaj, 20kb, photo to pdf)...`} />
                 <button className="flex shrink-0 items-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-bold text-accent-foreground transition hover:brightness-105">Find tool <ArrowRight size={16} /></button>
               </form>
               <div className="flex flex-wrap gap-2 px-2 pb-1 pt-3 text-[11px] text-primary-foreground/65">
@@ -371,9 +374,7 @@ function ResultBox({ result, onCopy, onDownload }: { result: string; onCopy: () 
   );
 }
 
-// =========================================================
-// 1. TEXT TOOLS COMPONENT (10 Tools)
-// =========================================================
+// 1. TEXT TOOLS
 function TextTool({ tool }: { tool: Tool }) {
   const [input, setInput] = useState('');
   const [mode, setMode] = useState('sentence');
@@ -437,12 +438,9 @@ function TextTool({ tool }: { tool: Tool }) {
   );
 }
 
-// =========================================================
-// 2. CALCULATORS & FINANCIAL COMPONENT (30 Tools)
-// =========================================================
-function CalculatorTool({ tool }: { tool: Tool }) {
+// 2. BASE CALCULATORS (Old 15 Math & Simple Calculators)
+function BaseCalculatorTool({ tool }: { tool: Tool }) {
   const [values, setValues] = useState<Record<string, string>>({ a: '', b: '', c: '', d: '' });
-  const [isMetro, setIsMetro] = useState(false);
   const [unitType, setUnitType] = useState('length');
   const [fromUnit, setFromUnit] = useState('m');
   const [toUnit, setToUnit] = useState('km');
@@ -453,104 +451,9 @@ function CalculatorTool({ tool }: { tool: Tool }) {
   const update = (key: string) => (value: string) => setValues((old) => ({ ...old, [key]: value }));
 
   const calc = () => {
-    const a = Number(values.a), b = Number(values.b), c = Number(values.c), d = Number(values.d);
+    const a = Number(values.a), b = Number(values.b), c = Number(values.c);
     setError('');
 
-    // SIP
-    if (tool.slug === 'sip-calculator') {
-      if (!a || !b || !c) { setError('Please enter monthly investment, expected return rate, and time period.'); return; }
-      const res = calculateSIP(a, b, c);
-      setResult(`Total Invested Amount: ₹${formatNumber(res.invested)}\nEstimated Wealth Gained: ₹${formatNumber(res.returns)}\nTotal Maturity Value: ₹${formatNumber(res.total)}`);
-      return;
-    }
-
-    // Lumpsum
-    if (tool.slug === 'lumpsum-calculator') {
-      if (!a || !b || !c) { setError('Enter total investment, expected return rate, and years.'); return; }
-      const res = calculateLumpsum(a, b, c);
-      setResult(`Invested Amount: ₹${formatNumber(res.invested)}\nEstimated Wealth Gained: ₹${formatNumber(res.returns)}\nTotal Future Value: ₹${formatNumber(res.total)}`);
-      return;
-    }
-
-    // PPF
-    if (tool.slug === 'ppf-calculator') {
-      if (!a) { setError('Enter annual investment amount.'); return; }
-      const res = calculatePPF(a, b || 7.1, c || 15);
-      setResult(`Total Investment (15 Yrs): ₹${formatNumber(res.invested)}\nTotal Interest Earned: ₹${formatNumber(res.returns)}\nMaturity Amount: ₹${formatNumber(res.total)}`);
-      return;
-    }
-
-    // Stock Average
-    if (tool.slug === 'stock-average-calculator') {
-      if (!a || !b || !c || !d) { setError('Enter quantity and price for both 1st and 2nd buy.'); return; }
-      const res = calculateStockAverage(a, b, c, d);
-      setResult(`Total Shares Held: ${res.totalQty}\nTotal Money Invested: ₹${formatNumber(res.totalCost)}\nNew Average Buying Price: ₹${res.avgPrice} per share`);
-      return;
-    }
-
-    // HRA
-    if (tool.slug === 'hra-calculator') {
-      if (!a || !b || !c) { setError('Enter basic monthly salary, HRA received, and rent paid.'); return; }
-      const res = calculateHRA(a, 0, b, c, isMetro);
-      setResult(`Exempt HRA (Tax-Free): ₹${formatNumber(res.exemptHRA)}\nTaxable HRA: ₹${formatNumber(res.taxableHRA)}`);
-      return;
-    }
-
-    // Fuel Cost
-    if (tool.slug === 'fuel-cost-calculator') {
-      if (!a || !b || !c) { setError('Enter total distance (km), vehicle mileage (km/l), and fuel price.'); return; }
-      const litersNeeded = a / b;
-      const totalCost = litersNeeded * c;
-      const perPerson = d > 0 ? totalCost / d : totalCost;
-      setResult(`Total Fuel Required: ${litersNeeded.toFixed(1)} Liters\nTotal Fuel Expense: ₹${formatNumber(Math.round(totalCost))}${d > 0 ? `\nCost per person (${d} people): ₹${formatNumber(Math.round(perPerson))}` : ''}`);
-      return;
-    }
-
-    // Salary In Hand
-    if (tool.slug === 'salary-calculator') {
-      if (!a) { setError('Enter your monthly CTC or Gross Salary.'); return; }
-      const pf = Math.min(1800, a * 0.12);
-      const profTax = 200;
-      const inHand = a - pf - profTax;
-      setResult(`Gross Monthly Salary: ₹${formatNumber(a)}\nEstimated EPF Deduction: ₹${formatNumber(Math.round(pf))}\nProfessional Tax: ₹${profTax}\nApprox. In-Hand Monthly Pay: ₹${formatNumber(Math.round(inHand))}`);
-      return;
-    }
-
-    // CAGR
-    if (tool.slug === 'cagr-calculator') {
-      if (!a || !b || !c) { setError('Enter initial value, final value, and years.'); return; }
-      const cagr = calculateCAGR(a, b, c);
-      setResult(`Compound Annual Growth Rate (CAGR): ${cagr}% per year`);
-      return;
-    }
-
-    // Calorie / TDEE
-    if (tool.slug === 'calorie-calculator') {
-      if (!a || !b || !c) { setError('Enter weight (kg), height (cm), and age.'); return; }
-      const bmr = 10 * a + 6.25 * b - 5 * c + 5;
-      setResult(`Daily Maintenance (TDEE): ~${Math.round(bmr * 1.375)} kcal\nWeight Loss Goal: ~${Math.round(bmr * 1.375 - 400)} kcal/day\nWeight Gain Goal: ~${Math.round(bmr * 1.375 + 400)} kcal/day`);
-      return;
-    }
-
-    // Tip Splitter
-    if (tool.slug === 'tip-calculator') {
-      if (!a) { setError('Enter bill amount.'); return; }
-      const tipAmount = a * ((b || 10) / 100);
-      const total = a + tipAmount;
-      const split = c > 0 ? total / c : total;
-      setResult(`Tip Amount: ₹${formatNumber(tipAmount)}\nTotal Bill: ₹${formatNumber(total)}${c > 0 ? `\nPer Person (${c} people): ₹${formatNumber(Math.round(split))}` : ''}`);
-      return;
-    }
-
-    // Water Intake
-    if (tool.slug === 'water-intake-calculator') {
-      if (!a) { setError('Enter body weight in kg.'); return; }
-      const waterLiters = (a * 0.033).toFixed(1);
-      setResult(`Recommended Daily Water Intake: ${waterLiters} Liters (~${Math.round(Number(waterLiters) * 4)} glasses)`);
-      return;
-    }
-
-    // Unit Converter
     if (tool.slug === 'unit-converter') {
       if (!values.a || isNaN(a)) { setError('Enter a valid value'); return; }
       const res = convertUnits(a, unitType, fromUnit, toUnit);
@@ -558,21 +461,18 @@ function CalculatorTool({ tool }: { tool: Tool }) {
       return;
     }
 
-    // Fraction Calculator
     if (tool.slug === 'fraction-calculator') {
       if (!values.a || !values.b || !values.c || !values.d) { setError('Fill all fraction boxes'); return; }
-      setResult(`Result: ${calculateFractions(a, b, c, d, fractionOp)}`);
+      setResult(`Result: ${calculateFractions(a, b, Number(values.c), Number(values.d), fractionOp)}`);
       return;
     }
 
-    // Ratio Simplifier
     if (tool.slug === 'ratio-calculator') {
       if (!a || !b) { setError('Enter width and height'); return; }
       setResult(`Simplified Ratio: ${simplifyRatio(a, b)}`);
       return;
     }
 
-    // Time Calculator
     if (tool.slug === 'time-calculator') {
       const h1 = Number(values.a) || 0, m1 = Number(values.b) || 0;
       const h2 = Number(values.c) || 0, m2 = Number(values.d) || 0;
@@ -590,9 +490,6 @@ function CalculatorTool({ tool }: { tool: Tool }) {
     else if (tool.slug === 'simple-interest-calculator') answer = `Interest: ₹${formatNumber(a * b * c / 100)}\nTotal Amount: ₹${formatNumber(a + a * b * c / 100)}`;
     else if (tool.slug === 'compound-interest-calculator') { const total = a * (1 + b / 100) ** c; answer = `Interest: ₹${formatNumber(total - a)}\nTotal Amount: ₹${formatNumber(total)}`; }
     else if (tool.slug === 'emi-calculator') { const monthly = b / 1200; const emi = a * monthly * (1 + monthly) ** c / ((1 + monthly) ** c - 1); answer = `Monthly EMI: ₹${formatNumber(emi)}\nTotal Payment: ₹${formatNumber(emi * c)}\nTotal Interest: ₹${formatNumber(emi * c - a)}`; }
-    else if (tool.slug === 'fd-calculator') { const total = a * (1 + b / 400) ** (4 * c); answer = `Total Maturity Amount: ₹${formatNumber(Math.round(total))}\nInterest Earned: ₹${formatNumber(Math.round(total - a))}`; }
-    else if (tool.slug === 'rd-calculator') { const n = c * 12; const totalDeposit = a * n; const r = b / 100; const interest = a * (n * (n + 1) / 24) * r; answer = `Total Deposited: ₹${formatNumber(totalDeposit)}\nTotal Interest: ₹${formatNumber(Math.round(interest))}\nMaturity Value: ₹${formatNumber(Math.round(totalDeposit + interest))}`; }
-    else if (tool.slug === 'inflation-calculator') { const future = a * (1 + (b || 6) / 100) ** c; answer = `Purchasing Cost in ${c} Years: ₹${formatNumber(Math.round(future))}\nPrice Increase: ₹${formatNumber(Math.round(future - a))}`; }
     else if (tool.slug === 'average-calculator') { const nums = values.a.split(',').map(Number).filter(Number.isFinite); answer = `Average: ${formatNumber(nums.reduce((x, y) => x + y, 0) / Math.max(1, nums.length))}`; }
     else if (tool.slug === 'date-difference-calculator') answer = `${Math.abs(Math.round((new Date(values.b).getTime() - new Date(values.a).getTime()) / 86400000)).toLocaleString()} days difference`;
     else if (tool.slug === 'age-calculator') {
@@ -609,51 +506,7 @@ function CalculatorTool({ tool }: { tool: Tool }) {
 
   return (
     <div className="max-w-2xl">
-      {tool.slug === 'sip-calculator' ? (
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="Monthly Investment (₹)" value={values.a} onChange={update('a')} type="number" placeholder="5000" />
-          <Field label="Expected Return Rate (%)" value={values.b} onChange={update('b')} type="number" placeholder="12" />
-          <Field label="Time Period (Years)" value={values.c} onChange={update('c')} type="number" placeholder="10" />
-        </div>
-      ) : tool.slug === 'stock-average-calculator' ? (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4 rounded-xl border p-3">
-            <p className="col-span-2 text-xs font-bold text-primary">First Purchase</p>
-            <Field label="Quantity" value={values.a} onChange={update('a')} type="number" placeholder="100" />
-            <Field label="Buy Price (₹)" value={values.b} onChange={update('b')} type="number" placeholder="250" />
-          </div>
-          <div className="grid grid-cols-2 gap-4 rounded-xl border p-3">
-            <p className="col-span-2 text-xs font-bold text-accent">Second Purchase (Dip Buy)</p>
-            <Field label="Quantity" value={values.c} onChange={update('c')} type="number" placeholder="100" />
-            <Field label="Buy Price (₹)" value={values.d} onChange={update('d')} type="number" placeholder="200" />
-          </div>
-        </div>
-      ) : tool.slug === 'hra-calculator' ? (
-        <div className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="Monthly Basic Pay (₹)" value={values.a} onChange={update('a')} type="number" placeholder="40000" />
-            <Field label="Monthly HRA Received (₹)" value={values.b} onChange={update('b')} type="number" placeholder="15000" />
-            <Field label="Monthly Rent Paid (₹)" value={values.c} onChange={update('c')} type="number" placeholder="18000" />
-          </div>
-          <label className="flex items-center gap-2 text-sm font-semibold">
-            <input type="checkbox" checked={isMetro} onChange={(e) => setIsMetro(e.target.checked)} />
-            Living in Metro City (Delhi, Mumbai, Kolkata, Chennai)
-          </label>
-        </div>
-      ) : tool.slug === 'fuel-cost-calculator' ? (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Total Distance (in KM)" value={values.a} onChange={update('a')} type="number" placeholder="350" />
-          <Field label="Vehicle Mileage (KM / Liter)" value={values.b} onChange={update('b')} type="number" placeholder="16" />
-          <Field label="Fuel Price per Liter (₹)" value={values.c} onChange={update('c')} type="number" placeholder="96" />
-          <Field label="Split Between Passengers (Optional)" value={values.d} onChange={update('d')} type="number" placeholder="4" />
-        </div>
-      ) : tool.slug === 'cagr-calculator' ? (
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="Initial Investment (₹)" value={values.a} onChange={update('a')} type="number" placeholder="100000" />
-          <Field label="Final Value (₹)" value={values.b} onChange={update('b')} type="number" placeholder="250000" />
-          <Field label="Years" value={values.c} onChange={update('c')} type="number" placeholder="5" />
-        </div>
-      ) : tool.slug === 'unit-converter' ? (
+      {tool.slug === 'unit-converter' ? (
         <div className="space-y-4">
           <div className="flex gap-2">
             {['length', 'weight', 'temperature'].map((t) => (
@@ -720,8 +573,8 @@ function CalculatorTool({ tool }: { tool: Tool }) {
             <><Field label="Start Date / DOB" value={values.a} onChange={update('a')} type="date" /><Field label="End Date / Today" value={values.b} onChange={update('b')} type="date" /></>
           ) : tool.slug === 'emi-calculator' ? (
             <><Field label="Loan Amount (₹)" value={values.a} onChange={update('a')} type="number" /><Field label="Annual Interest (%)" value={values.b} onChange={update('b')} type="number" /><Field label="Months" value={values.c} onChange={update('c')} type="number" /></>
-          ) : tool.slug === 'fd-calculator' || tool.slug === 'rd-calculator' || tool.slug === 'simple-interest-calculator' || tool.slug === 'compound-interest-calculator' ? (
-            <><Field label="Principal / Monthly Deposit (₹)" value={values.a} onChange={update('a')} type="number" /><Field label="Annual Interest Rate (%)" value={values.b} onChange={update('b')} type="number" /><Field label="Time Period (Years)" value={values.c} onChange={update('c')} type="number" /></>
+          ) : tool.slug === 'simple-interest-calculator' || tool.slug === 'compound-interest-calculator' ? (
+            <><Field label="Principal Deposit (₹)" value={values.a} onChange={update('a')} type="number" /><Field label="Annual Interest Rate (%)" value={values.b} onChange={update('b')} type="number" /><Field label="Time Period (Years)" value={values.c} onChange={update('c')} type="number" /></>
           ) : (
             <><Field label="Price / Value 1" value={values.a} onChange={update('a')} type="number" /><Field label="Percentage / Value 2" value={values.b} onChange={update('b')} type="number" /></>
           )}
@@ -738,9 +591,7 @@ function CalculatorTool({ tool }: { tool: Tool }) {
   );
 }
 
-// =========================================================
-// 3. GENERATORS & DEV TOOLS COMPONENT (10 Tools)
-// =========================================================
+// 3. BASE DEV TOOLS
 function GeneratorTool({ tool }: { tool: Tool }) {
   const [value, setValue] = useState('');
   const [length, setLength] = useState('16');
@@ -813,9 +664,7 @@ function GeneratorTool({ tool }: { tool: Tool }) {
   );
 }
 
-// =========================================================
-// 4. CODE & FORMATTERS COMPONENT (9 Tools)
-// =========================================================
+// 4. CODE & FORMATTERS
 function CodeTool({ tool }: { tool: Tool }) {
   const [input, setInput] = useState('');
   const [passphrase, setPassphrase] = useState('');
@@ -867,9 +716,7 @@ function CodeTool({ tool }: { tool: Tool }) {
   );
 }
 
-// =========================================================
-// 5. IMAGE TOOLS COMPONENT (15 Tools - FULL & UNCUT)
-// =========================================================
+// 5. BASE IMAGE TOOLS
 function ImageTool({ tool }: { tool: Tool }) {
   const [file, setFile] = useState<File | null>(null);
   const [resultUrl, setResultUrl] = useState('');
@@ -951,12 +798,8 @@ function ImageTool({ tool }: { tool: Tool }) {
       ctx.save();
       ctx.translate(canvas.width / 2, canvas.height / 2);
 
-      if (tool.slug === 'image-rotate') {
-        ctx.rotate((rotation * Math.PI) / 180);
-      }
-      if (tool.slug === 'image-flip') {
-        ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
-      }
+      if (tool.slug === 'image-rotate') ctx.rotate((rotation * Math.PI) / 180);
+      if (tool.slug === 'image-flip') ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
 
       ctx.drawImage(img, -outW / 2, -outH / 2, outW, outH);
       ctx.restore();
@@ -1012,9 +855,7 @@ function ImageTool({ tool }: { tool: Tool }) {
       <label className="flex min-h-[160px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card p-4 hover:border-primary/60">
         <input type="file" accept="image/*" className="sr-only" onChange={onFileChange} />
         <Upload size={24} className="text-primary" />
-        <span className="mt-2 text-sm font-bold">
-          {file ? `${file.name} (${Math.round(file.size / 1024)} KB)` : 'Choose an image'}
-        </span>
+        <span className="mt-2 text-sm font-bold">{file ? `${file.name} (${Math.round(file.size / 1024)} KB)` : 'Choose an image'}</span>
       </label>
 
       {tool.slug === 'image-compress' && (
@@ -1079,7 +920,6 @@ function ImageTool({ tool }: { tool: Tool }) {
           <input type="range" min="1" max="25" value={blurVal} onChange={(e) => setBlurVal(e.target.value)} className="w-full mt-2" />
         </div>
       )}
-
       {tool.slug === 'image-watermark' && (
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <Field label="Watermark Text" value={watermarkText} onChange={setWatermarkText} />
@@ -1113,9 +953,7 @@ function ImageTool({ tool }: { tool: Tool }) {
   );
 }
 
-// =========================================================
-// 6. PDF TOOLS COMPONENT (10 Tools - FULL & UNCUT)
-// =========================================================
+// 6. BASE PDF TOOLS
 function parsePageSelection(value: string, total: number) {
   const pages = new Set<number>();
   value.split(',').map((p) => p.trim()).filter(Boolean).forEach((part) => {
@@ -1146,7 +984,6 @@ function PdfTool({ tool }: { tool: Tool }) {
     try {
       const { PDFDocument, StandardFonts, rgb, degrees } = await import('pdf-lib');
 
-      // Images to PDF
       if (isImgToPdf) {
         const doc = await PDFDocument.create();
         for (const file of files) {
@@ -1161,7 +998,6 @@ function PdfTool({ tool }: { tool: Tool }) {
         return;
       }
 
-      // PDF Merge
       if (tool.slug === 'pdf-merge') {
         const mergedPdf = await PDFDocument.create();
         for (const file of files) {
@@ -1174,7 +1010,6 @@ function PdfTool({ tool }: { tool: Tool }) {
       } else {
         const source = await PDFDocument.load(await files[0].arrayBuffer());
 
-        // Split / Extract
         if (tool.slug === 'pdf-split' || tool.slug === 'pdf-extract-pages') {
           const selected = parsePageSelection(pages, source.getPageCount());
           if (!selected.length) throw new Error('Specify pages like 1 or 1-3.');
@@ -1183,9 +1018,7 @@ function PdfTool({ tool }: { tool: Tool }) {
           copied.forEach((p) => out.addPage(p));
           const bytes = await out.save();
           setResults([{ name: `${tool.slug}-pages.pdf`, url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
-        }
-        // Delete Pages
-        else if (tool.slug === 'pdf-delete-pages') {
+        } else if (tool.slug === 'pdf-delete-pages') {
           const toDelete = new Set(parsePageSelection(pages, source.getPageCount()));
           const keepIndices = source.getPageIndices().filter((idx) => !toDelete.has(idx));
           if (!keepIndices.length) throw new Error('Cannot delete all pages.');
@@ -1194,15 +1027,11 @@ function PdfTool({ tool }: { tool: Tool }) {
           copied.forEach((p) => out.addPage(p));
           const bytes = await out.save();
           setResults([{ name: 'pages-removed.pdf', url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
-        }
-        // Rotate
-        else if (tool.slug === 'pdf-rotate') {
+        } else if (tool.slug === 'pdf-rotate') {
           source.getPages().forEach((p) => p.setRotation(degrees((p.getRotation().angle + 90) % 360)));
           const bytes = await source.save();
           setResults([{ name: 'rotated.pdf', url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
-        }
-        // Watermark
-        else if (tool.slug === 'pdf-watermark') {
+        } else if (tool.slug === 'pdf-watermark') {
           const font = await source.embedFont(StandardFonts.HelveticaBold);
           source.getPages().forEach((p) => {
             const { width, height } = p.getSize();
@@ -1210,9 +1039,7 @@ function PdfTool({ tool }: { tool: Tool }) {
           });
           const bytes = await source.save();
           setResults([{ name: 'watermarked.pdf', url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
-        }
-        // Metadata Remover & PDF Compress
-        else {
+        } else {
           source.setTitle('');
           source.setAuthor('');
           source.setSubject('');
@@ -1285,7 +1112,7 @@ function PdfTool({ tool }: { tool: Tool }) {
 }
 
 // =========================================================
-// ROUTING TO 84 ACTIVE TOOLS
+// CENTRAL DYNAMIC ROUTER (ALL CATEGORIES & MODULES)
 // =========================================================
 function ToolPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -1294,22 +1121,53 @@ function ToolPage() {
   if (!tool) return <NotFound />;
   const Icon = getIcon(tool.icon);
 
+  // Category Slugs Mapping
   const textSlugs = ['word-counter','character-counter','case-converter','remove-extra-spaces','text-sorter','duplicate-line-remover','text-reverser','text-cleaner','slug-generator','lorem-ipsum-generator'];
   const devSlugs = ['qr-code-generator','barcode-generator','password-generator','uuid-generator','random-number-generator','color-picker','hex-to-rgb-converter','timestamp-converter','number-to-words'];
   const codeSlugs = ['json-formatter','json-minifier','html-formatter','css-formatter','javascript-formatter','xml-formatter','yaml-formatter','base64-encoder-decoder','url-encoder-decoder','text-encrypt-decrypt'];
   const imageSlugs = ['image-resize','image-compress','jpg-to-png','png-to-jpg','webp-converter','image-crop','image-rotate','image-flip','image-grayscale','image-blur','image-sharpen','image-brightness','image-contrast','image-watermark','favicon-generator'];
 
-  const toolView = textSlugs.includes(tool.slug)
-    ? <TextTool tool={tool} />
-    : devSlugs.includes(tool.slug)
-    ? <GeneratorTool tool={tool} />
-    : codeSlugs.includes(tool.slug)
-    ? <CodeTool tool={tool} />
-    : imageSlugs.includes(tool.slug)
-    ? <ImageTool tool={tool} />
-    : tool.category === 'PDF Tools'
-    ? <PdfTool tool={tool} />
-    : <CalculatorTool tool={tool} />;
+  // Financial Tools Slugs (New Batch 1)
+  const financialSlugs = [
+    'sip-calculator', 'lumpsum-calculator', 'ppf-calculator', 'fd-calculator',
+    'rd-calculator', 'cagr-calculator', 'stock-average-calculator', 'hra-calculator',
+    'salary-calculator', 'fuel-cost-calculator', 'inflation-calculator',
+    'dividend-yield-calculator', 'calorie-calculator', 'water-intake-calculator', 'tip-calculator'
+  ];
+
+  // Extra Image Slugs (Batch 2)
+  const extraImageSlugs = ['passport-photo-maker', 'heic-to-jpg', 'svg-to-png', 'meme-generator', 'color-palette-extractor', 'blur-face'];
+  // Advanced PDF Slugs (Batch 3)
+  const advancedPdfSlugs = ['protect-pdf', 'unlock-pdf', 'pdf-page-number', 'pdf-ocr', 'pdf-repair'];
+  // SEO & Text Slugs (Batch 4)
+  const seoTextSlugs = ['text-diff', 'markdown-to-html', 'html-to-markdown', 'keyword-density', 'morse-code'];
+  // Dev & Everyday Slugs (Batch 5)
+  const devUtilitySlugs = ['regex-tester', 'jwt-decoder', 'sql-formatter', 'hash-generator', 'speed-typing-test'];
+
+  // Dynamic Component Selection
+  const toolView = financialSlugs.includes(tool.slug) ? (
+    <FinancialTool tool={tool} />
+  ) : extraImageSlugs.includes(tool.slug) ? (
+    <ExtraImageTool tool={tool} />
+  ) : advancedPdfSlugs.includes(tool.slug) ? (
+    <AdvancedPdfTool tool={tool} />
+  ) : seoTextSlugs.includes(tool.slug) ? (
+    <SeoTextTool tool={tool} />
+  ) : devUtilitySlugs.includes(tool.slug) ? (
+    <DevUtilityTool tool={tool} />
+  ) : textSlugs.includes(tool.slug) ? (
+    <TextTool tool={tool} />
+  ) : devSlugs.includes(tool.slug) ? (
+    <GeneratorTool tool={tool} />
+  ) : codeSlugs.includes(tool.slug) ? (
+    <CodeTool tool={tool} />
+  ) : imageSlugs.includes(tool.slug) ? (
+    <ImageTool tool={tool} />
+  ) : tool.category === 'PDF Tools' ? (
+    <PdfTool tool={tool} />
+  ) : (
+    <BaseCalculatorTool tool={tool} />
+  );
 
   return (
     <Shell>
