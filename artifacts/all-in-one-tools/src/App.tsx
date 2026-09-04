@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { categories, categoryInfo, toolBySlug, tools, type Category, type Tool } from '@/data/tools';
+import { getToolKnowledge } from '@/data/tool-knowledge';
 import {
   calculateFractions,
   cipherText,
@@ -955,6 +956,7 @@ function ToolPage() {
 
   if (!tool) return <NotFound />;
   const Icon = getIcon(tool.icon);
+  const knowledge = getToolKnowledge(tool.slug, tool.name);
 
   // 1. Slugs mapped to original built-in components
   const baseImageSlugs = ['image-resize','image-compress','jpg-to-png','png-to-jpg','webp-converter','image-crop','image-rotate','image-flip','image-grayscale','image-blur','image-sharpen','image-brightness','image-contrast','image-watermark','favicon-generator'];
@@ -1026,7 +1028,7 @@ function ToolPage() {
           </div>
         </div>
 
-        {/* Global Pro-Tip Callout Banner */}
+        {/* Global Pro-Tip Callout Banner (DYNAMIC FROM TOOL KNOWLEDGE) */}
         <div className="mt-6 flex items-start gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-3.5 sm:items-center">
           <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
             <Lightbulb size={16} />
@@ -1034,11 +1036,11 @@ function ToolPage() {
           <p className="text-xs font-semibold leading-5 text-foreground sm:text-sm">
             {lang === 'en' ? (
               <>
-                <strong>Pro Tip:</strong> All operations execute securely inside your browser using WebAssembly. Your files are never uploaded to any remote server.
+                <strong>Pro Tip:</strong> {knowledge.tipEn}
               </>
             ) : (
               <>
-                <strong>प्रो-टिप:</strong> यह टूल 100% आपके मोबाइल/कंप्यूटर में ही चलता है। आपकी कोई भी फाइल किसी सर्वर पर अपलोड नहीं होती, डेटा पूरी तरह सुरक्षित है।
+                <strong>प्रो-टिप:</strong> {knowledge.tipHi}
               </>
             )}
           </p>
@@ -1047,7 +1049,7 @@ function ToolPage() {
         {/* Core Tool View Card */}
         <div className="mt-6 rounded-3xl border border-border bg-card p-5 shadow-xs sm:p-7">{toolView}</div>
 
-        {/* Global + Local Use Cases & Comprehensive Guidance */}
+        {/* Global + Local Use Cases & Comprehensive Guidance (DYNAMIC FROM TOOL KNOWLEDGE) */}
         <section className="mt-14 max-w-4xl border-t border-border pt-10 text-foreground">
           {lang === 'en' ? (
             <div>
@@ -1056,23 +1058,17 @@ function ToolPage() {
               </div>
               <h2 className="mt-2 font-display text-2xl font-bold tracking-tight sm:text-3xl">What is {tool.name} & How it Works</h2>
               <p className="mt-3 text-sm leading-7 text-muted-foreground">
-                {tool.name} is a high-speed, client-side digital utility designed for professionals, students, and businesses worldwide. Operating directly within your device’s memory sandbox, it eliminates the need for expensive desktop software installations or slow server uploads.
+                {knowledge.whatEn}
               </p>
 
               <h3 className="mt-8 font-display text-lg font-bold">Key Real-World Applications</h3>
               <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-border bg-card p-4">
-                  <p className="font-bold text-xs uppercase text-primary">Compliance & Legal</p>
-                  <p className="mt-1 text-xs text-muted-foreground leading-5">Format government forms, court e-filings, and international visa applications safely.</p>
-                </div>
-                <div className="rounded-2xl border border-border bg-card p-4">
-                  <p className="font-bold text-xs uppercase text-primary">Business & Work</p>
-                  <p className="mt-1 text-xs text-muted-foreground leading-5">Optimize email attachments, prepare client invoices, and bundle reports in seconds.</p>
-                </div>
-                <div className="rounded-2xl border border-border bg-card p-4">
-                  <p className="font-bold text-xs uppercase text-primary">Academic & Notes</p>
-                  <p className="mt-1 text-xs text-muted-foreground leading-5">Compress college assignments and create 2-in-1 print-friendly pocket study guides.</p>
-                </div>
+                {knowledge.casesEn.map((item, idx) => (
+                  <div key={idx} className="rounded-2xl border border-border bg-card p-4">
+                    <p className="font-bold text-xs uppercase text-primary">{item.title}</p>
+                    <p className="mt-1 text-xs text-muted-foreground leading-5">{item.desc}</p>
+                  </div>
+                ))}
               </div>
 
               <h3 className="mt-8 font-display text-lg font-bold">Step-by-Step Instructions</h3>
@@ -1089,23 +1085,17 @@ function ToolPage() {
               </div>
               <h2 className="mt-2 font-display text-2xl font-bold tracking-tight sm:text-3xl">{tool.name} क्या काम करता है?</h2>
               <p className="mt-3 text-sm leading-7 text-muted-foreground">
-                {tool.name} एक बेहद तेज़ और मुफ़्त ऑनलाइन टूल है। इसका सबसे बड़ा फ़ायदा यह है कि यह बिना किसी ऐप को डाउनलोड किए सीधे आपके फ़ोन या कंप्यूटर के ब्राउज़र में तुरंत काम कर देता है।
+                {knowledge.whatHi}
               </p>
 
               <h3 className="mt-8 font-display text-lg font-bold">यह कहाँ-कहाँ सबसे ज़्यादा काम आता है?</h3>
               <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-border bg-card p-4">
-                  <p className="font-bold text-xs uppercase text-primary">सरकारी व प्रतियोगी परीक्षाएँ</p>
-                  <p className="mt-1 text-xs text-muted-foreground leading-5">SSC, UPSC, रेलवे, पुलिस भर्ती व कॉलेज फॉर्म में तय साइज़ की फ़ाइल अपलोड करने के लिए।</p>
-                </div>
-                <div className="rounded-2xl border border-border bg-card p-4">
-                  <p className="font-bold text-xs uppercase text-primary">साइबर कैफ़े व प्रिंटिंग बचत</p>
-                  <p className="mt-1 text-xs text-muted-foreground leading-5">दुकान या ऑफिस में ज़ेरॉक्स निकालते समय 1 पेज पर 2 पन्ने प्रिंट करके कागज़ और पैसे बचाएँ।</p>
-                </div>
-                <div className="rounded-2xl border border-border bg-card p-4">
-                  <p className="font-bold text-xs uppercase text-primary">WhatsApp व ईमेल शेयरिंग</p>
-                  <p className="mt-1 text-xs text-muted-foreground leading-5">भारी भरकम फाइलों का साइज़ कम करके बिना किसी परेशानी के तुरंत शेयर करने के लिए।</p>
-                </div>
+                {knowledge.casesHi.map((item, idx) => (
+                  <div key={idx} className="rounded-2xl border border-border bg-card p-4">
+                    <p className="font-bold text-xs uppercase text-primary">{item.title}</p>
+                    <p className="mt-1 text-xs text-muted-foreground leading-5">{item.desc}</p>
+                  </div>
+                ))}
               </div>
 
               <h3 className="mt-8 font-display text-lg font-bold">इसे इस्तेमाल कैसे करें? (3 आसान स्टेप्स)</h3>
