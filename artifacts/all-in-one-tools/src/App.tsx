@@ -5,13 +5,14 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Link, Route, Switch, useLocation, useParams, Router as WouterRouter } from 'wouter';
 import {
-  ArrowLeft, ArrowLeftRight, ArrowRight, Calculator, Check, ChevronRight, CircleHelp,
-  Clock3, Copy, Download, FileText, Heart, Image as ImageIcon, Lightbulb, Menu, Moon,
-  RefreshCcw, Search, ShieldCheck, Sparkles, Sun, Terminal, Type, Upload, X, Zap,
+  ArrowLeft, ArrowLeftRight, ArrowRight, Calculator, Check, Copy, Download, FileText,
+  Image as ImageIcon, Menu, Moon, RefreshCcw, Search, ShieldCheck, Sparkles, Sun, Terminal, Type, Upload, X, Zap,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { categories, categoryInfo, toolBySlug, tools, type Category, type Tool } from '@/data/tools';
 import {
+  calculateFractions,
+  cipherText,
   convertUnits,
   formatCode,
   formatNumber,
@@ -50,7 +51,7 @@ function PageMeta({ title, description }: { title: string; description?: string 
 function Header() {
   const [dark, toggleTheme] = useTheme();
   const [open, setOpen] = useState(false);
-  const [location, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
   const [query, setQuery] = useState('');
   const submitSearch = (event: React.FormEvent) => {
     event.preventDefault();
@@ -59,7 +60,7 @@ function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/80 bg-background/95 backdrop-blur">
       <div className="mx-auto flex h-[4.5rem] max-w-7xl items-center gap-4 px-4 sm:px-6">
-        <Link href="/" data-testid="link-brand" className="group flex shrink-0 items-center gap-2.5">
+        <Link href="/" className="group flex shrink-0 items-center gap-2.5">
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm transition-transform group-hover:rotate-[-6deg]">
             <Zap size={18} fill="currentColor" />
           </span>
@@ -68,35 +69,20 @@ function Header() {
           </span>
         </Link>
         <nav className="hidden items-center gap-1 md:flex">
-          <Link href="/tools" data-testid="link-all-tools" className={`rounded-full px-3 py-2 text-sm font-semibold transition-colors hover:bg-secondary ${location === '/tools' ? 'text-primary' : 'text-muted-foreground'}`}>
-            All tools
-          </Link>
-          <Link href={categoryPath('Text Tools')} className="rounded-full px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary">
-            Text tools
-          </Link>
-          <Link href={categoryPath('Calculators')} className="rounded-full px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary">
-            Calculators
-          </Link>
+          <Link href="/tools" className="rounded-full px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary">All tools</Link>
+          <Link href={categoryPath('PDF Tools')} className="rounded-full px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary">PDF tools</Link>
+          <Link href={categoryPath('Image Tools')} className="rounded-full px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary">Image tools</Link>
+          <Link href={categoryPath('Calculators')} className="rounded-full px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary">Calculators</Link>
         </nav>
         <form onSubmit={submitSearch} className="ml-auto hidden max-w-[260px] flex-1 items-center gap-2 rounded-full border border-border bg-card px-3 py-2 sm:flex">
           <Search size={16} className="text-muted-foreground" />
-          <input
-            data-testid="input-header-search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-            placeholder="Find a tool..."
-          />
-          {query && (
-            <button type="button" onClick={() => setQuery('')} className="text-muted-foreground hover:text-foreground">
-              <X size={14} />
-            </button>
-          )}
+          <input value={query} onChange={(e) => setQuery(e.target.value)} className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground" placeholder="Find a tool..." />
+          {query && <button type="button" onClick={() => setQuery('')} className="text-muted-foreground hover:text-foreground"><X size={14} /></button>}
         </form>
-        <button data-testid="button-theme-toggle" aria-label="Toggle theme" onClick={toggleTheme} className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:border-primary hover:text-primary">
+        <button aria-label="Toggle theme" onClick={toggleTheme} className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:border-primary hover:text-primary">
           {dark ? <Sun size={16} /> : <Moon size={16} />}
         </button>
-        <button data-testid="button-mobile-menu" onClick={() => setOpen(!open)} className="grid h-9 w-9 place-items-center rounded-full border border-border md:hidden">
+        <button onClick={() => setOpen(!open)} className="grid h-9 w-9 place-items-center rounded-full border border-border md:hidden">
           {open ? <X size={18} /> : <Menu size={18} />}
         </button>
       </div>
@@ -104,15 +90,11 @@ function Header() {
         <div className="border-t border-border bg-card px-4 py-3 md:hidden">
           <form onSubmit={submitSearch} className="mb-2 flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2">
             <Search size={16} className="text-muted-foreground" />
-            <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} className="min-w-0 flex-1 bg-transparent py-1 text-sm outline-none" placeholder="Search all 69 tools" />
+            <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} className="min-w-0 flex-1 bg-transparent py-1 text-sm outline-none" placeholder="Search 69 tools" />
           </form>
-          <Link onClick={() => setOpen(false)} href="/tools" className="block rounded-lg px-3 py-3 text-sm font-semibold">
-            Browse all tools
-          </Link>
+          <Link onClick={() => setOpen(false)} href="/tools" className="block rounded-lg px-3 py-3 text-sm font-semibold">Browse all tools</Link>
           {categories.map((cat) => (
-            <Link onClick={() => setOpen(false)} key={cat} href={categoryPath(cat)} className="block rounded-lg px-3 py-3 text-sm text-muted-foreground">
-              {categoryInfo[cat].label}
-            </Link>
+            <Link onClick={() => setOpen(false)} key={cat} href={categoryPath(cat)} className="block rounded-lg px-3 py-3 text-sm text-muted-foreground">{categoryInfo[cat].label}</Link>
           ))}
         </div>
       )}
@@ -128,17 +110,15 @@ function Footer() {
           <div className="flex items-center gap-2 font-display font-bold">
             <span className="grid h-7 w-7 place-items-center rounded-lg bg-primary text-primary-foreground"><Zap size={14} fill="currentColor" /></span> all in one tools
           </div>
-          <p className="mt-3 max-w-xs text-sm leading-6 text-muted-foreground">
-            Free, lightweight tools running directly in your browser. Private by default, useful by design.
-          </p>
+          <p className="mt-3 max-w-xs text-sm leading-6 text-muted-foreground">Free, lightweight client-side tools running in your browser. Private, ultra-fast, and unlimited.</p>
         </div>
         <div>
-          <p className="mb-3 text-xs font-bold uppercase tracking-[.16em] text-muted-foreground">Explore</p>
+          <p className="mb-3 text-xs font-bold uppercase tracking-[.16em] text-muted-foreground">Categories</p>
           <div className="grid gap-2 text-sm">
             <Link href="/tools" className="hover:text-primary">All tools</Link>
-            <Link href={categoryPath('Calculators')} className="hover:text-primary">Calculators</Link>
-            <Link href={categoryPath('Text Tools')} className="hover:text-primary">Text tools</Link>
             <Link href={categoryPath('PDF Tools')} className="hover:text-primary">PDF tools</Link>
+            <Link href={categoryPath('Image Tools')} className="hover:text-primary">Image tools</Link>
+            <Link href={categoryPath('Calculators')} className="hover:text-primary">Calculators</Link>
           </div>
         </div>
         <div>
@@ -150,14 +130,14 @@ function Footer() {
           </div>
         </div>
         <div>
-          <p className="mb-3 text-xs font-bold uppercase tracking-[.16em] text-muted-foreground">The Promise</p>
-          <p className="font-display text-lg font-bold">Simple tools.<br />Real results.</p>
-          <p className="mt-2 text-xs text-muted-foreground">100% Client-side. No files stored on remote servers.</p>
+          <p className="mb-3 text-xs font-bold uppercase tracking-[.16em] text-muted-foreground">Our Guarantee</p>
+          <p className="font-display text-lg font-bold">100% Private.<br />Real Results.</p>
+          <p className="mt-2 text-xs text-muted-foreground">Files are processed in your browser memory and never uploaded to remote servers.</p>
         </div>
       </div>
       <div className="mx-auto flex max-w-7xl items-center justify-between border-t border-border px-4 py-5 text-xs text-muted-foreground sm:px-6">
         <span>© 2026 All in One Tools. All rights reserved.</span>
-        <span className="flex items-center gap-1.5"><ShieldCheck size={14} className="text-primary" /> Runs locally in your browser</span>
+        <span className="flex items-center gap-1.5"><ShieldCheck size={14} className="text-primary" /> Runs 100% locally</span>
       </div>
     </footer>
   );
@@ -215,30 +195,30 @@ function Home() {
 
   return (
     <Shell>
-      <PageMeta title="Simple Tools. Real Results." description="69+ free, fast and private online tools for everyday work." />
+      <PageMeta title="Simple Tools. Real Results." description="69+ free, fast and private online utilities for everyday work." />
       <main>
         <section className="relative overflow-hidden border-b border-border bg-primary text-primary-foreground">
           <div className="relative mx-auto grid max-w-7xl gap-10 px-4 pb-14 pt-14 sm:px-6 md:grid-cols-[1.1fr_.9fr] md:items-end md:pb-20 md:pt-20">
             <div>
               <p className="mb-5 flex items-center gap-2 font-mono-app text-[11px] uppercase tracking-[.2em] text-primary-foreground/70">
-                <span className="h-2 w-2 rounded-full bg-accent" /> 69+ tools, no account needed
+                <span className="h-2 w-2 rounded-full bg-accent" /> 69+ tools, no file upload needed
               </p>
               <h1 className="max-w-xl font-display text-[clamp(2.5rem,6vw,5rem)] font-bold leading-[1] tracking-[-.05em]">
                 Har Kaam Ke Liye<br /><span className="text-accent">Ek Tool.</span>
               </h1>
               <p className="mt-6 max-w-md text-base leading-7 text-primary-foreground/75">
-                69+ Free Online Tools — Fast, Simple & Useful. Get the little things done and get back to your day.
+                Private, instant, and high-performance utilities that run completely inside your web browser.
               </p>
             </div>
             <div className="rounded-3xl border border-primary-foreground/15 bg-primary-foreground/[.08] p-3 shadow-xl">
               <form onSubmit={submit} className="flex items-center gap-3 rounded-2xl bg-background p-2 text-foreground">
                 <Search className="ml-2 text-muted-foreground" size={21} />
-                <input value={heroSearch} onChange={(e) => setHeroSearch(e.target.value)} className="min-w-0 flex-1 bg-transparent px-1 py-3 text-sm outline-none placeholder:text-muted-foreground" placeholder="What do you need to do?" />
+                <input value={heroSearch} onChange={(e) => setHeroSearch(e.target.value)} className="min-w-0 flex-1 bg-transparent px-1 py-3 text-sm outline-none placeholder:text-muted-foreground" placeholder="Search 69 tools..." />
                 <button className="flex shrink-0 items-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-bold text-accent-foreground transition hover:brightness-105">Find tool <ArrowRight size={16} /></button>
               </form>
               <div className="flex flex-wrap gap-2 px-2 pb-1 pt-3 text-[11px] text-primary-foreground/65">
                 <span>Try:</span>
-                {['image compress', 'word counter', 'percentage calculator', 'pdf merge'].map((item) => (
+                {['image compress', 'pdf merge', 'word counter', 'emi calculator', 'images to pdf'].map((item) => (
                   <button type="button" onClick={() => setHeroSearch(item)} key={item} className="underline decoration-primary-foreground/25 underline-offset-2 hover:text-primary-foreground">{item}</button>
                 ))}
               </div>
@@ -250,7 +230,7 @@ function Home() {
           <section className="py-12">
             <div className="mb-5 flex items-end justify-between">
               <div>
-                <p className="font-mono-app text-[11px] uppercase tracking-[.16em] text-accent">Start here</p>
+                <p className="font-mono-app text-[11px] uppercase tracking-[.16em] text-accent">Categories</p>
                 <h2 className="mt-1 font-display text-2xl font-bold tracking-[-.04em]">Browse by need</h2>
               </div>
               <Link href="/tools" className="flex items-center gap-1 text-sm font-bold text-primary hover:underline">See all <ArrowRight size={15} /></Link>
@@ -263,12 +243,7 @@ function Home() {
           </section>
 
           <section className="pb-14">
-            <div className="mb-5 flex items-end justify-between">
-              <div>
-                <p className="font-mono-app text-[11px] uppercase tracking-[.16em] text-accent">Popular right now</p>
-                <h2 className="mt-1 font-display text-2xl font-bold tracking-[-.04em]">The useful shelf</h2>
-              </div>
-            </div>
+            <h2 className="mb-5 font-display text-2xl font-bold tracking-[-.04em]">Popular Tools</h2>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {popular.slice(0, 4).map((tool, i) => (
                 <ToolCard featured={i === 0} key={tool.slug} tool={tool} />
@@ -291,12 +266,11 @@ function ToolsPage() {
 
   return (
     <Shell>
-      <PageMeta title="All tools" />
+      <PageMeta title="All Tools" />
       <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 md:py-14">
         <div className="max-w-2xl">
-          <p className="font-mono-app text-[11px] uppercase tracking-[.16em] text-accent">The complete kit</p>
-          <h1 className="mt-2 font-display text-4xl font-bold tracking-[-.06em] md:text-5xl">Find the right little tool.</h1>
-          <p className="mt-4 text-muted-foreground">Search all 69 tools or select a category below.</p>
+          <h1 className="font-display text-4xl font-bold tracking-[-.06em] md:text-5xl">All 69 Tools</h1>
+          <p className="mt-3 text-muted-foreground">Select a tool or filter by specific category.</p>
         </div>
         <div className="mt-8 flex flex-col gap-3 lg:flex-row">
           <label className="flex flex-1 items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-sm">
@@ -312,10 +286,7 @@ function ToolsPage() {
             ))}
           </div>
         </div>
-        <div className="mt-10 flex items-center justify-between">
-          <p className="text-sm text-muted-foreground"><strong className="text-foreground">{shown.length}</strong> tools found</p>
-        </div>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {shown.map((tool) => <ToolCard key={tool.slug} tool={tool} />)}
         </div>
       </main>
@@ -376,13 +347,23 @@ function ResultBox({ result, onCopy, onDownload }: { result: string; onCopy: () 
   );
 }
 
+// =========================================================
+// 1. TEXT TOOLS COMPONENT (10 Tools)
+// =========================================================
 function TextTool({ tool }: { tool: Tool }) {
   const [input, setInput] = useState('');
   const [mode, setMode] = useState('sentence');
+  const [order, setOrder] = useState('asc');
   const isCounter = tool.slug === 'word-counter' || tool.slug === 'character-counter';
   const isLorem = tool.slug === 'lorem-ipsum-generator';
   const [count, setCount] = useState('3');
-  const result = isLorem && count.trim() ? Array.from({ length: Math.min(10, Math.max(1, Number(count) || 1)) }, (_, i) => `Lorem ipsum dolor sit amet, consectetur adipiscing elit. ${i === 0 ? 'Vestibulum ante ipsum primis in faucibus orci luctus et ultrices.' : 'Integer posuere erat a ante venenatis dapibus posuere velit aliquet.'}`).join('\n\n') : isLorem ? '' : transformText(tool.slug, input, { mode });
+
+  const result = isLorem && count.trim()
+    ? Array.from({ length: Math.min(10, Math.max(1, Number(count) || 1)) }, (_, i) => `Lorem ipsum dolor sit amet, consectetur adipiscing elit. ${i === 0 ? 'Vestibulum ante ipsum primis in faucibus orci luctus et ultrices.' : 'Integer posuere erat a ante venenatis dapibus posuere velit aliquet.'}`).join('\n\n')
+    : isLorem
+    ? ''
+    : transformText(tool.slug, input, { mode, order });
+
   const words = input.trim() ? input.trim().split(/\s+/).length : 0;
   const characters = input.length;
   const copy = () => navigator.clipboard?.writeText(isCounter ? `${words} words · ${characters} characters` : result);
@@ -391,7 +372,7 @@ function TextTool({ tool }: { tool: Tool }) {
     <div className="grid gap-5 lg:grid-cols-[1fr_.78fr]">
       <div>
         <label className="grid gap-2 text-sm font-semibold">
-          <span>{isLorem ? 'How many paragraphs?' : 'Your text'}</span>
+          <span>{isLorem ? 'Number of Paragraphs' : 'Input Text'}</span>
           {isLorem ? (
             <input type="number" min="1" max="10" value={count} onChange={(e) => setCount(e.target.value)} className="w-40 rounded-xl border border-input bg-background px-3.5 py-3 text-sm outline-none focus:border-primary" />
           ) : (
@@ -400,9 +381,15 @@ function TextTool({ tool }: { tool: Tool }) {
         </label>
         {tool.slug === 'case-converter' && (
           <div className="mt-3 flex flex-wrap gap-2">
-            {[['sentence','Sentence case'],['upper','UPPERCASE'],['lower','lowercase'],['title','Title Case'],['camel','camelCase']].map(([val, label]) => (
+            {[['sentence','Sentence case'],['upper','UPPERCASE'],['lower','lowercase'],['title','Title Case'],['camel','camelCase'],['snake','snake_case']].map(([val, label]) => (
               <button key={val} onClick={() => setMode(val)} className={`rounded-lg px-3 py-2 text-xs font-bold ${mode === val ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>{label}</button>
             ))}
+          </div>
+        )}
+        {tool.slug === 'text-sorter' && (
+          <div className="mt-3 flex gap-2">
+            <button onClick={() => setOrder('asc')} className={`rounded-lg px-3 py-2 text-xs font-bold ${order === 'asc' ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}>A to Z</button>
+            <button onClick={() => setOrder('desc')} className={`rounded-lg px-3 py-2 text-xs font-bold ${order === 'desc' ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}>Z to A</button>
           </div>
         )}
         <button onClick={() => { setInput(''); setCount('3'); setMode('sentence'); }} className="mt-4 inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-bold text-muted-foreground hover:text-foreground">
@@ -414,36 +401,47 @@ function TextTool({ tool }: { tool: Tool }) {
           <div className="grid gap-3">
             <div className="rounded-2xl bg-secondary p-5"><p className="text-xs text-muted-foreground">Words</p><p className="mt-2 font-display text-4xl font-bold">{words.toLocaleString()}</p></div>
             <div className="rounded-2xl bg-accent/15 p-5"><p className="text-xs text-muted-foreground">Characters</p><p className="mt-2 font-display text-4xl font-bold">{characters.toLocaleString()}</p></div>
-            <div className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground">Approx. reading time: <strong className="text-foreground">{Math.max(1, Math.ceil(words / 200))} min</strong></div>
+            <div className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground">Reading Time: <strong className="text-foreground">{Math.max(1, Math.ceil(words / 200))} min</strong></div>
           </div>
         ) : result ? (
           <ResultBox result={result} onCopy={copy} onDownload={() => downloadText(`${tool.slug}.txt`, result)} />
         ) : (
-          <div className="rounded-2xl border border-dashed border-border bg-secondary/30 p-5 text-sm text-muted-foreground">Output will appear here.</div>
+          <div className="rounded-2xl border border-dashed border-border bg-secondary/30 p-5 text-sm text-muted-foreground">Transformed output will appear here.</div>
         )}
       </div>
     </div>
   );
 }
 
+// =========================================================
+// 2. CALCULATORS COMPONENT (15 Tools)
+// =========================================================
 function CalculatorTool({ tool }: { tool: Tool }) {
   const [values, setValues] = useState<Record<string, string>>({ a: '', b: '', c: '', d: '' });
   const [unitType, setUnitType] = useState('length');
   const [fromUnit, setFromUnit] = useState('m');
   const [toUnit, setToUnit] = useState('km');
+  const [fractionOp, setFractionOp] = useState('+');
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
 
   const update = (key: string) => (value: string) => setValues((old) => ({ ...old, [key]: value }));
 
   const calc = () => {
-    const a = Number(values.a), b = Number(values.b), c = Number(values.c);
+    const a = Number(values.a), b = Number(values.b), c = Number(values.c), d = Number(values.d);
     setError('');
 
     if (tool.slug === 'unit-converter') {
       if (!values.a || isNaN(a)) { setError('Enter a valid value'); return; }
       const res = convertUnits(a, unitType, fromUnit, toUnit);
       setResult(`${a} ${fromUnit} = ${formatNumber(res)} ${toUnit}`);
+      return;
+    }
+
+    if (tool.slug === 'fraction-calculator') {
+      if (!values.a || !values.b || !values.c || !values.d) { setError('Fill numerator and denominator for both fractions'); return; }
+      const res = calculateFractions(a, b, c, d, fractionOp);
+      setResult(`Fraction Result: ${res}`);
       return;
     }
 
@@ -463,18 +461,24 @@ function CalculatorTool({ tool }: { tool: Tool }) {
 
     let answer = '';
     if (tool.slug === 'percentage-calculator') answer = `${formatNumber(a * b / 100)} is ${b}% of ${formatNumber(a)}`;
-    else if (tool.slug === 'discount-calculator') answer = `Sale price: ${formatNumber(a - a * b / 100)}\nYou save: ${formatNumber(a * b / 100)}`;
-    else if (tool.slug === 'gst-calculator') answer = `Total with GST: ${formatNumber(a + a * b / 100)}\nGST amount: ${formatNumber(a * b / 100)}`;
-    else if (tool.slug === 'profit-loss-calculator') { const diff = b - a; answer = `${diff >= 0 ? 'Profit' : 'Loss'}: ${formatNumber(Math.abs(diff))}\nMargin: ${formatNumber(Math.abs(diff) / Math.max(1, a) * 100)}%`; }
-    else if (tool.slug === 'bmi-calculator') { const bmi = a / ((b / 100) ** 2); answer = `BMI: ${formatNumber(bmi)}\n${bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Normal/Healthy' : bmi < 30 ? 'Overweight' : 'Obesity'}`; }
-    else if (tool.slug === 'simple-interest-calculator') answer = `Interest: ${formatNumber(a * b * c / 100)}\nTotal: ${formatNumber(a + a * b * c / 100)}`;
-    else if (tool.slug === 'compound-interest-calculator') { const total = a * (1 + b / 100) ** c; answer = `Interest: ${formatNumber(total - a)}\nTotal: ${formatNumber(total)}`; }
-    else if (tool.slug === 'emi-calculator') { const monthly = b / 1200; const emi = a * monthly * (1 + monthly) ** c / ((1 + monthly) ** c - 1); answer = `Monthly EMI: ${formatNumber(emi)}\nTotal payment: ${formatNumber(emi * c)}`; }
-    else if (tool.slug === 'average-calculator') { const nums = values.a.split(',').map(Number).filter(Number.isFinite); answer = `Average: ${formatNumber(nums.reduce((x, y) => x + y, 0) / Math.max(1, nums.length))}`; }
-    else if (tool.slug === 'date-difference-calculator') answer = `${Math.abs(Math.round((new Date(values.b).getTime() - new Date(values.a).getTime()) / 86400000)).toLocaleString()} days`;
-    else if (tool.slug === 'age-calculator') { const born = new Date(values.a), now = new Date(values.b || Date.now()); let age = now.getFullYear() - born.getFullYear(); if (now < new Date(now.getFullYear(), born.getMonth(), born.getDate())) age--; answer = `${Math.max(0, age)} years old`; }
-    else answer = `Result: ${formatNumber(a + b)}`;
-
+    else if (tool.slug === 'discount-calculator') answer = `Sale Price: ₹${formatNumber(a - a * b / 100)}\nYou Save: ₹${formatNumber(a * b / 100)}`;
+    else if (tool.slug === 'gst-calculator') answer = `Total Price (with GST): ₹${formatNumber(a + a * b / 100)}\nGST Amount: ₹${formatNumber(a * b / 100)}`;
+    else if (tool.slug === 'profit-loss-calculator') { const diff = b - a; answer = `${diff >= 0 ? 'Profit' : 'Loss'}: ₹${formatNumber(Math.abs(diff))}\nMargin: ${formatNumber(Math.abs(diff) / Math.max(1, a) * 100)}%`; }
+    else if (tool.slug === 'bmi-calculator') { const bmi = a / ((b / 100) ** 2); answer = `BMI: ${formatNumber(bmi)}\n${bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Healthy weight' : bmi < 30 ? 'Overweight' : 'Obesity'}`; }
+    else if (tool.slug === 'simple-interest-calculator') answer = `Interest: ₹${formatNumber(a * b * c / 100)}\nTotal Amount: ₹${formatNumber(a + a * b * c / 100)}`;
+    else if (tool.slug === 'compound-interest-calculator') { const total = a * (1 + b / 100) ** c; answer = `Interest: ₹${formatNumber(total - a)}\nTotal Amount: ₹${formatNumber(total)}`; }
+    else if (tool.slug === 'emi-calculator') { const monthly = b / 1200; const emi = a * monthly * (1 + monthly) ** c / ((1 + monthly) ** c - 1); answer = `Monthly EMI: ₹${formatNumber(emi)}\nTotal Payment: ₹${formatNumber(emi * c)}\nTotal Interest: ₹${formatNumber(emi * c - a)}`; }
+    else if (tool.slug === 'average-calculator') { const nums = values.a.split(',').map(Number).filter(Number.isFinite); answer = `Average: ${formatNumber(nums.reduce((x, y) => x + y, 0) / Math.max(1, nums.length))}\nTotal Sum: ${nums.reduce((x, y) => x + y, 0)}`; }
+    else if (tool.slug === 'date-difference-calculator') answer = `${Math.abs(Math.round((new Date(values.b).getTime() - new Date(values.a).getTime()) / 86400000)).toLocaleString()} days difference`;
+    else if (tool.slug === 'age-calculator') {
+      const born = new Date(values.a), now = new Date(values.b || Date.now());
+      let years = now.getFullYear() - born.getFullYear();
+      let months = now.getMonth() - born.getMonth();
+      let days = now.getDate() - born.getDate();
+      if (days < 0) { months--; days += 30; }
+      if (months < 0) { years--; months += 12; }
+      answer = `Exact Age: ${years} Years, ${months} Months, and ${days} Days`;
+    }
     setResult(answer);
   };
 
@@ -505,10 +509,30 @@ function CalculatorTool({ tool }: { tool: Tool }) {
             </label>
           </div>
         </div>
+      ) : tool.slug === 'fraction-calculator' ? (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="rounded-xl border p-3">
+              <p className="text-xs font-bold mb-2">Fraction 1</p>
+              <Field label="Numerator" value={values.a} onChange={update('a')} type="number" />
+              <Field label="Denominator" value={values.b} onChange={update('b')} type="number" />
+            </div>
+            <div className="rounded-xl border p-3">
+              <p className="text-xs font-bold mb-2">Fraction 2</p>
+              <Field label="Numerator" value={values.c} onChange={update('c')} type="number" />
+              <Field label="Denominator" value={values.d} onChange={update('d')} type="number" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            {['+', '-', '*', '/'].map((op) => (
+              <button key={op} onClick={() => setFractionOp(op)} className={`rounded-lg px-4 py-2 font-bold ${fractionOp === op ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}>{op}</button>
+            ))}
+          </div>
+        </div>
       ) : tool.slug === 'ratio-calculator' ? (
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Width / First Number" value={values.a} onChange={update('a')} type="number" placeholder="1920" />
-          <Field label="Height / Second Number" value={values.b} onChange={update('b')} type="number" placeholder="1080" />
+          <Field label="Width / Number 1" value={values.a} onChange={update('a')} type="number" placeholder="1920" />
+          <Field label="Height / Number 2" value={values.b} onChange={update('b')} type="number" placeholder="1080" />
         </div>
       ) : tool.slug === 'time-calculator' ? (
         <div className="grid grid-cols-2 gap-4">
@@ -517,16 +541,20 @@ function CalculatorTool({ tool }: { tool: Tool }) {
           <Field label="Hours 2" value={values.c} onChange={update('c')} type="number" placeholder="1" />
           <Field label="Minutes 2" value={values.d} onChange={update('d')} type="number" placeholder="45" />
         </div>
+      ) : tool.slug === 'average-calculator' ? (
+        <Field label="Numbers (separated by commas)" value={values.a} onChange={update('a')} placeholder="10, 20, 30, 45" />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {tool.slug === 'bmi-calculator' ? (
-            <><Field label="Weight (in kg)" value={values.a} onChange={update('a')} type="number" placeholder="70" /><Field label="Height (in cm)" value={values.b} onChange={update('b')} type="number" placeholder="175" /></>
+            <><Field label="Weight (kg)" value={values.a} onChange={update('a')} type="number" placeholder="70" /><Field label="Height (cm)" value={values.b} onChange={update('b')} type="number" placeholder="175" /></>
           ) : tool.slug === 'age-calculator' || tool.slug === 'date-difference-calculator' ? (
-            <><Field label="Date of Birth / Start Date" value={values.a} onChange={update('a')} type="date" /><Field label="Today / End Date" value={values.b} onChange={update('b')} type="date" /></>
+            <><Field label="Start Date / DOB" value={values.a} onChange={update('a')} type="date" /><Field label="End Date / Today" value={values.b} onChange={update('b')} type="date" /></>
           ) : tool.slug === 'emi-calculator' ? (
-            <><Field label="Loan Amount (₹)" value={values.a} onChange={update('a')} type="number" /><Field label="Annual Interest Rate (%)" value={values.b} onChange={update('b')} type="number" /><Field label="Tenure (Months)" value={values.c} onChange={update('c')} type="number" /></>
+            <><Field label="Loan Amount (₹)" value={values.a} onChange={update('a')} type="number" /><Field label="Annual Interest (%)" value={values.b} onChange={update('b')} type="number" /><Field label="Months" value={values.c} onChange={update('c')} type="number" /></>
+          ) : tool.slug === 'simple-interest-calculator' || tool.slug === 'compound-interest-calculator' ? (
+            <><Field label="Principal (₹)" value={values.a} onChange={update('a')} type="number" /><Field label="Annual Rate (%)" value={values.b} onChange={update('b')} type="number" /><Field label="Time (Years)" value={values.c} onChange={update('c')} type="number" /></>
           ) : (
-            <><Field label="First Value / Amount" value={values.a} onChange={update('a')} type="text" /><Field label="Second Value / Rate" value={values.b} onChange={update('b')} type="text" /></>
+            <><Field label="Price / Value 1" value={values.a} onChange={update('a')} type="number" /><Field label="Percentage / Value 2" value={values.b} onChange={update('b')} type="number" /></>
           )}
         </div>
       )}
@@ -541,6 +569,9 @@ function CalculatorTool({ tool }: { tool: Tool }) {
   );
 }
 
+// =========================================================
+// 3. GENERATORS & DEV TOOLS COMPONENT (10 Tools)
+// =========================================================
 function GeneratorTool({ tool }: { tool: Tool }) {
   const [value, setValue] = useState('');
   const [length, setLength] = useState('16');
@@ -554,7 +585,11 @@ function GeneratorTool({ tool }: { tool: Tool }) {
     setError(''); setResultUrl('');
     if (tool.slug === 'password-generator') setResult(makeRandomPassword(Number(length) || 16, symbols));
     else if (tool.slug === 'uuid-generator') setResult(crypto.randomUUID());
-    else if (tool.slug === 'hex-to-rgb-converter') setResult(hexToRgb(value || color));
+    else if (tool.slug === 'random-number-generator') {
+      const [min, max] = value.split(',').map((n) => Number(n.trim()));
+      if (isNaN(min) || isNaN(max) || max <= min) { setError('Format: Min, Max (e.g. 1, 100)'); return; }
+      setResult(String(Math.floor(Math.random() * (max - min + 1)) + min));
+    } else if (tool.slug === 'hex-to-rgb-converter') setResult(hexToRgb(value || color));
     else if (tool.slug === 'number-to-words') setResult(numberToWords(Number(value)));
     else if (tool.slug === 'timestamp-converter') {
       const ts = Number(value) ? new Date(Number(value) * 1000) : new Date(value);
@@ -592,7 +627,7 @@ function GeneratorTool({ tool }: { tool: Tool }) {
           <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={symbols} onChange={(e) => setSymbols(e.target.checked)} /> Include Special Symbols (!@#$)</label>
         </div>
       ) : (
-        <Field label="Input / Value" value={value} onChange={setValue} placeholder="Type here..." />
+        <Field label={tool.slug === 'random-number-generator' ? 'Range: Min, Max' : 'Input Value'} value={value} onChange={setValue} placeholder={tool.slug === 'random-number-generator' ? '1, 100' : 'Type here...'} />
       )}
       <div className="mt-4 flex gap-2">
         <button onClick={generate} className="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground flex items-center gap-2"><Sparkles size={16} /> Run / Generate</button>
@@ -609,34 +644,53 @@ function GeneratorTool({ tool }: { tool: Tool }) {
   );
 }
 
+// =========================================================
+// 4. CODE & FORMATTERS COMPONENT (9 Tools)
+// =========================================================
 function CodeTool({ tool }: { tool: Tool }) {
   const [input, setInput] = useState('');
+  const [passphrase, setPassphrase] = useState('');
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
 
-  const run = () => {
+  const run = (isDecrypt: boolean = false) => {
     try {
       setError('');
       let out = input;
-      if (['json-formatter', 'json-minifier', 'css-formatter', 'html-formatter', 'xml-formatter'].includes(tool.slug)) {
+      if (tool.slug === 'text-encrypt-decrypt') {
+        if (!passphrase) { setError('Please enter a secret key/passphrase'); return; }
+        out = cipherText(input, passphrase, isDecrypt);
+      } else if (['json-formatter', 'json-minifier', 'css-formatter', 'html-formatter', 'xml-formatter', 'javascript-formatter', 'yaml-formatter'].includes(tool.slug)) {
         out = formatCode(input, tool.slug);
       } else if (tool.slug === 'base64-encoder-decoder') {
-        out = input.startsWith('encoded:') ? atob(input.slice(8)) : `encoded:${btoa(input)}`;
+        out = isDecrypt ? atob(input) : btoa(input);
       } else if (tool.slug === 'url-encoder-decoder') {
-        out = decodeURIComponent(input) === input ? encodeURIComponent(input) : decodeURIComponent(input);
+        out = isDecrypt ? decodeURIComponent(input) : encodeURIComponent(input);
       }
       setResult(out);
     } catch {
-      setError('Invalid code format or syntax.');
+      setError('Invalid format or decoding failure.');
     }
   };
 
   return (
     <div className="max-w-2xl">
-      <textarea value={input} onChange={(e) => setInput(e.target.value)} className="min-h-[220px] w-full rounded-xl border p-3 font-mono-app text-sm" placeholder="Paste code or data here..." />
-      <div className="mt-3 flex gap-2">
-        <button onClick={run} className="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">Format / Process</button>
-        <button onClick={() => { setInput(''); setResult(''); setError(''); }} className="rounded-xl border px-4 py-3 text-sm font-bold text-muted-foreground">Reset</button>
+      <textarea value={input} onChange={(e) => setInput(e.target.value)} className="min-h-[220px] w-full rounded-xl border p-3 font-mono-app text-sm" placeholder="Paste code or text here..." />
+      {tool.slug === 'text-encrypt-decrypt' && (
+        <div className="mt-3">
+          <Field label="Secret Passphrase / Password" value={passphrase} onChange={setPassphrase} type="password" placeholder="Enter key..." />
+        </div>
+      )}
+      <div className="mt-4 flex gap-2">
+        {tool.slug === 'text-encrypt-decrypt' || tool.slug === 'base64-encoder-decoder' || tool.slug === 'url-encoder-decoder' ? (
+          <>
+            <button onClick={() => run(false)} className="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">Encode / Encrypt</button>
+            <button onClick={() => run(true)} className="rounded-xl bg-secondary px-5 py-3 text-sm font-bold">Decode / Decrypt</button>
+          </>
+        ) : (
+          <button onClick={() => run(false)} className="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">Format Code</button>
+        )}
+        <button onClick={() => { setInput(''); setPassphrase(''); setResult(''); setError(''); }} className="rounded-xl border px-4 py-3 text-sm font-bold text-muted-foreground">Reset</button>
       </div>
       {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
       {result && <ResultBox result={result} onCopy={() => navigator.clipboard.writeText(result)} onDownload={() => downloadText(`${tool.slug}.txt`, result)} />}
@@ -644,53 +698,119 @@ function CodeTool({ tool }: { tool: Tool }) {
   );
 }
 
+// =========================================================
+// 5. IMAGE TOOLS COMPONENT (15 Tools)
+// =========================================================
 function ImageTool({ tool }: { tool: Tool }) {
   const [file, setFile] = useState<File | null>(null);
   const [resultUrl, setResultUrl] = useState('');
   const [resultSizeKb, setResultSizeKb] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+
   const [targetKb, setTargetKb] = useState('50');
   const [width, setWidth] = useState('800');
   const [height, setHeight] = useState('600');
   const [rotation, setRotation] = useState(0);
+  const [flipH, setFlipH] = useState(false);
+  const [flipV, setFlipV] = useState(false);
+  const [brightness, setBrightness] = useState('100');
+  const [contrast, setContrast] = useState('100');
+  const [blurVal, setBlurVal] = useState('5');
+  const [watermarkText, setWatermarkText] = useState('All In One Tools');
+  const [watermarkColor, setWatermarkColor] = useState('#ffffff');
 
-  const isCompress = tool.slug === 'image-compress';
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (f) {
+      setFile(f);
+      setError('');
+      setResultUrl('');
+      setResultSizeKb(null);
+      const img = new Image();
+      img.onload = () => {
+        setWidth(String(img.width));
+        setHeight(String(img.height));
+      };
+      img.src = URL.createObjectURL(f);
+    }
+  };
 
-  const process = async () => {
-    if (!file) { setError('Choose an image first.'); return; }
-    setBusy(true); setError(''); setResultUrl(''); setResultSizeKb(null);
+  const process = () => {
+    if (!file) { setError('Select an image file first.'); return; }
+    setBusy(true); setError('');
 
     const img = new Image();
     const sourceUrl = URL.createObjectURL(file);
 
     img.onload = () => {
-      const outputWidth = (tool.slug === 'image-resize' || tool.slug === 'image-crop') ? Number(width) || img.width : img.width;
-      const outputHeight = (tool.slug === 'image-resize' || tool.slug === 'image-crop') ? Number(height) || img.height : img.height;
-
       const canvas = document.createElement('canvas');
-      canvas.width = outputWidth;
-      canvas.height = outputHeight;
       const ctx = canvas.getContext('2d');
-      if (!ctx) { setError('Canvas context unavailable'); setBusy(false); return; }
+      if (!ctx) { setError('Canvas initialization failed.'); setBusy(false); return; }
 
-      if (tool.slug === 'image-grayscale') ctx.filter = 'grayscale(1)';
-      else if (tool.slug === 'image-blur') ctx.filter = 'blur(4px)';
-
-      if (tool.slug === 'image-rotate') {
-        const nextRot = (rotation + 90) % 360;
-        setRotation(nextRot);
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.rotate((nextRot * Math.PI) / 180);
-        ctx.drawImage(img, -outputWidth / 2, -outputHeight / 2, outputWidth, outputHeight);
-      } else {
-        ctx.drawImage(img, 0, 0, outputWidth, outputHeight);
+      if (tool.slug === 'favicon-generator') {
+        canvas.width = 32;
+        canvas.height = 32;
+        ctx.drawImage(img, 0, 0, 32, 32);
+        const data = canvas.toDataURL('image/png');
+        setResultUrl(data);
+        setResultSizeKb(Math.round(((data.length * 3) / 4) / 1024));
+        setBusy(false);
+        URL.revokeObjectURL(sourceUrl);
+        return;
       }
 
-      if (isCompress && targetKb && Number(targetKb) > 0) {
+      let outW = (tool.slug === 'image-resize' || tool.slug === 'image-crop') ? Number(width) || img.width : img.width;
+      let outH = (tool.slug === 'image-resize' || tool.slug === 'image-crop') ? Number(height) || img.height : img.height;
+
+      if (tool.slug === 'image-rotate' && (rotation === 90 || rotation === 270)) {
+        canvas.width = outH;
+        canvas.height = outW;
+      } else {
+        canvas.width = outW;
+        canvas.height = outH;
+      }
+
+      const filters: string[] = [];
+      if (tool.slug === 'image-grayscale') filters.push('grayscale(100%)');
+      if (tool.slug === 'image-blur') filters.push(`blur(${blurVal}px)`);
+      if (tool.slug === 'image-brightness') filters.push(`brightness(${brightness}%)`);
+      if (tool.slug === 'image-contrast') filters.push(`contrast(${contrast}%)`);
+      if (tool.slug === 'image-sharpen') filters.push('contrast(160%) brightness(105%)');
+      ctx.filter = filters.length ? filters.join(' ') : 'none';
+
+      ctx.save();
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+
+      if (tool.slug === 'image-rotate') {
+        ctx.rotate((rotation * Math.PI) / 180);
+      }
+      if (tool.slug === 'image-flip') {
+        ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+      }
+
+      ctx.drawImage(img, -outW / 2, -outH / 2, outW, outH);
+      ctx.restore();
+
+      if (tool.slug === 'image-watermark' && watermarkText.trim()) {
+        ctx.font = `bold ${Math.max(20, Math.floor(outW / 20))}px sans-serif`;
+        ctx.fillStyle = watermarkColor;
+        ctx.globalAlpha = 0.6;
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(watermarkText, canvas.width - 20, canvas.height - 20);
+        ctx.globalAlpha = 1.0;
+      }
+
+      let mimeType = 'image/png';
+      if (tool.slug === 'png-to-jpg' || tool.slug === 'image-compress') mimeType = 'image/jpeg';
+      else if (tool.slug === 'webp-converter') mimeType = 'image/webp';
+      else if (tool.slug === 'jpg-to-png') mimeType = 'image/png';
+
+      if (tool.slug === 'image-compress' && targetKb && Number(targetKb) > 0) {
         const targetBytes = Number(targetKb) * 1024;
         let minQ = 0.05, maxQ = 0.98, bestData = '';
-        for (let i = 0; i < 6; i++) {
+        for (let i = 0; i < 7; i++) {
           const midQ = (minQ + maxQ) / 2;
           const data = canvas.toDataURL('image/jpeg', midQ);
           const size = Math.round((data.length * 3) / 4);
@@ -705,8 +825,7 @@ function ImageTool({ tool }: { tool: Tool }) {
         setResultUrl(finalData);
         setResultSizeKb(Math.round(((finalData.length * 3) / 4) / 1024));
       } else {
-        const outType = tool.slug === 'png-to-jpg' ? 'image/jpeg' : tool.slug === 'webp-converter' ? 'image/webp' : 'image/png';
-        const data = canvas.toDataURL(outType, 0.85);
+        const data = canvas.toDataURL(mimeType, 0.9);
         setResultUrl(data);
         setResultSizeKb(Math.round(((data.length * 3) / 4) / 1024));
       }
@@ -715,23 +834,25 @@ function ImageTool({ tool }: { tool: Tool }) {
       setBusy(false);
     };
 
-    img.onerror = () => { setError('Failed to read image.'); setBusy(false); };
+    img.onerror = () => { setError('Failed to load image.'); setBusy(false); };
     img.src = sourceUrl;
   };
 
   return (
     <div className="max-w-2xl">
       <label className="flex min-h-[160px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card p-4 hover:border-primary/60">
-        <input type="file" accept="image/*" className="sr-only" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+        <input type="file" accept="image/*" className="sr-only" onChange={onFileChange} />
         <Upload size={24} className="text-primary" />
-        <span className="mt-2 text-sm font-bold">{file ? `${file.name} (${Math.round(file.size / 1024)} KB)` : 'Choose an image'}</span>
+        <span className="mt-2 text-sm font-bold">
+          {file ? `${file.name} (${Math.round(file.size / 1024)} KB)` : 'Choose an image'}
+        </span>
       </label>
 
-      {isCompress && (
+      {tool.slug === 'image-compress' && (
         <div className="mt-4">
-          <Field label="Target Size in KB (e.g. 20, 50, 100)" value={targetKb} onChange={setTargetKb} type="number" placeholder="50" />
+          <Field label="Target File Size (KB)" value={targetKb} onChange={setTargetKb} type="number" placeholder="50" />
           <div className="mt-2 flex gap-2">
-            {[20, 50, 100, 200].map((kb) => (
+            {[20, 50, 100, 200, 500].map((kb) => (
               <button key={kb} type="button" onClick={() => setTargetKb(String(kb))} className={`rounded-lg border px-3 py-1 text-xs font-semibold ${targetKb === String(kb) ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}>
                 Under {kb}KB
               </button>
@@ -747,22 +868,74 @@ function ImageTool({ tool }: { tool: Tool }) {
         </div>
       )}
 
-      <div className="mt-4 flex gap-2">
+      {tool.slug === 'image-rotate' && (
+        <div className="mt-4">
+          <label className="text-sm font-semibold">Rotation Angle: {rotation}°</label>
+          <div className="mt-2 flex gap-2">
+            {[90, 180, 270].map((deg) => (
+              <button key={deg} type="button" onClick={() => setRotation(deg)} className={`rounded-lg border px-4 py-2 text-xs font-bold ${rotation === deg ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}>
+                Rotate {deg}°
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {tool.slug === 'image-flip' && (
+        <div className="mt-4 flex gap-3">
+          <button type="button" onClick={() => setFlipH(!flipH)} className={`rounded-xl border px-4 py-2 text-xs font-bold ${flipH ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}>
+            Flip Horizontal {flipH ? '✓' : ''}
+          </button>
+          <button type="button" onClick={() => setFlipV(!flipV)} className={`rounded-xl border px-4 py-2 text-xs font-bold ${flipV ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}>
+            Flip Vertical {flipV ? '✓' : ''}
+          </button>
+        </div>
+      )}
+
+      {tool.slug === 'image-brightness' && (
+        <div className="mt-4">
+          <label className="text-sm font-semibold">Brightness: {brightness}%</label>
+          <input type="range" min="20" max="200" value={brightness} onChange={(e) => setBrightness(e.target.value)} className="w-full mt-2" />
+        </div>
+      )}
+      {tool.slug === 'image-contrast' && (
+        <div className="mt-4">
+          <label className="text-sm font-semibold">Contrast: {contrast}%</label>
+          <input type="range" min="20" max="200" value={contrast} onChange={(e) => setContrast(e.target.value)} className="w-full mt-2" />
+        </div>
+      )}
+      {tool.slug === 'image-blur' && (
+        <div className="mt-4">
+          <label className="text-sm font-semibold">Blur Intensity: {blurVal}px</label>
+          <input type="range" min="1" max="25" value={blurVal} onChange={(e) => setBlurVal(e.target.value)} className="w-full mt-2" />
+        </div>
+      )}
+
+      {tool.slug === 'image-watermark' && (
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <Field label="Watermark Text" value={watermarkText} onChange={setWatermarkText} />
+          <label className="text-sm font-semibold">Color:
+            <input type="color" value={watermarkColor} onChange={(e) => setWatermarkColor(e.target.value)} className="h-11 w-full mt-2 rounded-xl border p-1" />
+          </label>
+        </div>
+      )}
+
+      <div className="mt-5 flex gap-2">
         <button onClick={process} disabled={busy} className="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground disabled:opacity-50">
-          {busy ? 'Processing...' : isCompress ? 'Compress Image' : tool.slug === 'image-rotate' ? 'Rotate 90°' : 'Process Image'}
+          {busy ? 'Processing...' : `Execute ${tool.name}`}
         </button>
       </div>
 
       {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
 
       {resultUrl && (
-        <div className="mt-5 rounded-xl border border-border p-4">
+        <div className="mt-5 rounded-xl border border-border p-4 bg-background">
           <div className="mb-3 flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-primary">Output Ready</span>
-            {resultSizeKb && <span className="rounded-md bg-secondary px-2 py-1 text-xs font-bold">Size: ~{resultSizeKb} KB</span>}
+            {resultSizeKb && <span className="rounded-md bg-secondary px-2 py-1 text-xs font-bold">New Size: ~{resultSizeKb} KB</span>}
           </div>
-          <img src={resultUrl} alt="Result" className="max-h-72 rounded-xl object-contain mx-auto" />
-          <a href={resultUrl} download={`${tool.slug}-result.${isCompress || tool.slug === 'png-to-jpg' ? 'jpg' : 'png'}`} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground">
+          <img src={resultUrl} alt="Result" className="max-h-72 rounded-xl object-contain mx-auto border" />
+          <a href={resultUrl} download={`${tool.slug}-output.${tool.slug === 'favicon-generator' || tool.slug === 'jpg-to-png' ? 'png' : tool.slug === 'webp-converter' ? 'webp' : 'jpg'}`} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground">
             <Download size={14} /> Download Image
           </a>
         </div>
@@ -771,6 +944,9 @@ function ImageTool({ tool }: { tool: Tool }) {
   );
 }
 
+// =========================================================
+// 6. PDF TOOLS COMPONENT (10 Tools)
+// =========================================================
 function parsePageSelection(value: string, total: number) {
   const pages = new Set<number>();
   value.split(',').map((p) => p.trim()).filter(Boolean).forEach((part) => {
@@ -791,13 +967,32 @@ function PdfTool({ tool }: { tool: Tool }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
+  const isImgToPdf = tool.slug === 'images-to-pdf';
+
   const process = async () => {
     setError(''); setResults([]);
-    if (!files.length) { setError('Select at least one PDF file.'); return; }
+    if (!files.length) { setError('Please select file(s) first.'); return; }
     setBusy(true);
 
     try {
       const { PDFDocument, StandardFonts, rgb, degrees } = await import('pdf-lib');
+
+      // 1. Images to PDF
+      if (isImgToPdf) {
+        const doc = await PDFDocument.create();
+        for (const file of files) {
+          const imgBytes = await file.arrayBuffer();
+          const image = file.type === 'image/png' ? await doc.embedPng(imgBytes) : await doc.embedJpg(imgBytes);
+          const page = doc.addPage([image.width, image.height]);
+          page.drawImage(image, { x: 0, y: 0, width: image.width, height: image.height });
+        }
+        const bytes = await doc.save();
+        setResults([{ name: 'images-combined.pdf', url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
+        setBusy(false);
+        return;
+      }
+
+      // 2. PDF Merge
       if (tool.slug === 'pdf-merge') {
         const mergedPdf = await PDFDocument.create();
         for (const file of files) {
@@ -809,23 +1004,36 @@ function PdfTool({ tool }: { tool: Tool }) {
         setResults([{ name: 'merged-document.pdf', url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
       } else {
         const source = await PDFDocument.load(await files[0].arrayBuffer());
-        if (tool.slug === 'pdf-split') {
+
+        // 3. PDF Split / Extract Pages
+        if (tool.slug === 'pdf-split' || tool.slug === 'pdf-extract-pages') {
           const selected = parsePageSelection(pages, source.getPageCount());
           if (!selected.length) throw new Error('Specify pages like 1 or 1-3.');
-          const splitResults = [];
-          for (const [idx, pageIdx] of selected.entries()) {
-            const out = await PDFDocument.create();
-            const [copied] = await out.copyPages(source, [pageIdx]);
-            out.addPage(copied);
-            const bytes = await out.save();
-            splitResults.push({ name: `split-page-${idx + 1}.pdf`, url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) });
-          }
-          setResults(splitResults);
-        } else if (tool.slug === 'pdf-rotate') {
+          const out = await PDFDocument.create();
+          const copied = await out.copyPages(source, selected);
+          copied.forEach((p) => out.addPage(p));
+          const bytes = await out.save();
+          setResults([{ name: `${tool.slug}-pages.pdf`, url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
+        }
+        // 4. Delete Pages
+        else if (tool.slug === 'pdf-delete-pages') {
+          const toDelete = new Set(parsePageSelection(pages, source.getPageCount()));
+          const keepIndices = source.getPageIndices().filter((idx) => !toDelete.has(idx));
+          if (!keepIndices.length) throw new Error('Cannot delete all pages.');
+          const out = await PDFDocument.create();
+          const copied = await out.copyPages(source, keepIndices);
+          copied.forEach((p) => out.addPage(p));
+          const bytes = await out.save();
+          setResults([{ name: 'pages-removed.pdf', url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
+        }
+        // 5. Rotate PDF
+        else if (tool.slug === 'pdf-rotate') {
           source.getPages().forEach((p) => p.setRotation(degrees((p.getRotation().angle + 90) % 360)));
           const bytes = await source.save();
           setResults([{ name: 'rotated.pdf', url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
-        } else if (tool.slug === 'pdf-watermark') {
+        }
+        // 6. Watermark PDF
+        else if (tool.slug === 'pdf-watermark') {
           const font = await source.embedFont(StandardFonts.HelveticaBold);
           source.getPages().forEach((p) => {
             const { width, height } = p.getSize();
@@ -833,7 +1041,15 @@ function PdfTool({ tool }: { tool: Tool }) {
           });
           const bytes = await source.save();
           setResults([{ name: 'watermarked.pdf', url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
-        } else {
+        }
+        // 7. Remove Metadata / Compress PDF
+        else {
+          source.setTitle('');
+          source.setAuthor('');
+          source.setSubject('');
+          source.setKeywords([]);
+          source.setProducer('');
+          source.setCreator('');
           const bytes = await source.save({ useObjectStreams: true });
           setResults([{ name: `${tool.slug}.pdf`, url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
         }
@@ -855,9 +1071,9 @@ function PdfTool({ tool }: { tool: Tool }) {
   return (
     <div className="max-w-2xl">
       <label className="flex min-h-[160px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card p-4 hover:border-primary/60">
-        <input type="file" accept=".pdf" multiple={tool.slug === 'pdf-merge'} onChange={(e) => setFiles(Array.from(e.target.files || []))} className="sr-only" />
+        <input type="file" accept={isImgToPdf ? 'image/*' : '.pdf'} multiple={tool.slug === 'pdf-merge' || isImgToPdf} onChange={(e) => setFiles(Array.from(e.target.files || []))} className="sr-only" />
         <Upload size={24} className="text-primary" />
-        <span className="mt-2 text-sm font-bold">{files.length ? `${files.length} file(s) selected` : 'Choose PDF file(s)'}</span>
+        <span className="mt-2 text-sm font-bold">{files.length ? `${files.length} file(s) selected` : isImgToPdf ? 'Choose Image(s) to combine' : 'Choose PDF file(s)'}</span>
       </label>
 
       {files.length > 0 && (
@@ -866,8 +1082,8 @@ function PdfTool({ tool }: { tool: Tool }) {
         </div>
       )}
 
-      {tool.slug === 'pdf-split' && (
-        <div className="mt-4"><Field label="Pages to extract (e.g. 1, 3-5)" value={pages} onChange={setPages} placeholder="1, 3-5" /></div>
+      {(tool.slug === 'pdf-split' || tool.slug === 'pdf-extract-pages' || tool.slug === 'pdf-delete-pages') && (
+        <div className="mt-4"><Field label="Page Numbers / Range (e.g. 1, 3-5)" value={pages} onChange={setPages} placeholder="1, 3-5" /></div>
       )}
       {tool.slug === 'pdf-watermark' && (
         <div className="mt-4"><Field label="Watermark Text" value={watermark} onChange={setWatermark} /></div>
@@ -884,12 +1100,12 @@ function PdfTool({ tool }: { tool: Tool }) {
 
       {results.length > 0 && (
         <div className="mt-5 rounded-xl border border-primary/30 bg-primary/5 p-4">
-          <p className="text-xs font-bold uppercase tracking-wide text-primary">Ready to download</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-primary">Download Ready</p>
           {results.map((res, i) => (
             <div key={i} className="mt-2 flex items-center justify-between">
               <span className="text-sm font-semibold truncate">{res.name}</span>
               <a href={res.url} download={res.name} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-bold text-primary-foreground">
-                <Download size={14} /> Download PDF
+                <Download size={14} /> Download File
               </a>
             </div>
           ))}
@@ -899,6 +1115,9 @@ function PdfTool({ tool }: { tool: Tool }) {
   );
 }
 
+// =========================================================
+// ROUTING TO CORRECT 69 TOOL SUITE
+// =========================================================
 function ToolPage() {
   const { slug } = useParams<{ slug: string }>();
   const tool = toolBySlug[slug || ''];
@@ -912,7 +1131,17 @@ function ToolPage() {
   const codeSlugs = ['json-formatter','json-minifier','html-formatter','css-formatter','javascript-formatter','xml-formatter','yaml-formatter','base64-encoder-decoder','url-encoder-decoder','text-encrypt-decrypt'];
   const imageSlugs = ['image-resize','image-compress','jpg-to-png','png-to-jpg','webp-converter','image-crop','image-rotate','image-flip','image-grayscale','image-blur','image-sharpen','image-brightness','image-contrast','image-watermark','favicon-generator'];
 
-  const toolView = textSlugs.includes(tool.slug) ? <TextTool tool={tool} /> : calcSlugs.includes(tool.slug) ? <CalculatorTool tool={tool} /> : devSlugs.includes(tool.slug) ? <GeneratorTool tool={tool} /> : codeSlugs.includes(tool.slug) ? <CodeTool tool={tool} /> : imageSlugs.includes(tool.slug) ? <ImageTool tool={tool} /> : <PdfTool tool={tool} />;
+  const toolView = textSlugs.includes(tool.slug)
+    ? <TextTool tool={tool} />
+    : calcSlugs.includes(tool.slug)
+    ? <CalculatorTool tool={tool} />
+    : devSlugs.includes(tool.slug)
+    ? <GeneratorTool tool={tool} />
+    : codeSlugs.includes(tool.slug)
+    ? <CodeTool tool={tool} />
+    : imageSlugs.includes(tool.slug)
+    ? <ImageTool tool={tool} />
+    : <PdfTool tool={tool} />;
 
   return (
     <Shell>
