@@ -11,7 +11,13 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { categories, categoryInfo, toolBySlug, tools, type Category, type Tool } from '@/data/tools';
 import {
+  calculateCAGR,
   calculateFractions,
+  calculateHRA,
+  calculateLumpsum,
+  calculatePPF,
+  calculateSIP,
+  calculateStockAverage,
   cipherText,
   convertUnits,
   formatCode,
@@ -70,13 +76,13 @@ function Header() {
         </Link>
         <nav className="hidden items-center gap-1 md:flex">
           <Link href="/tools" className="rounded-full px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary">All tools</Link>
-          <Link href={categoryPath('PDF Tools')} className="rounded-full px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary">PDF tools</Link>
+          <Link href={categoryPath('Calculators')} className="rounded-full px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary">Finance & Calculators</Link>
           <Link href={categoryPath('Image Tools')} className="rounded-full px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary">Image tools</Link>
-          <Link href={categoryPath('Calculators')} className="rounded-full px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary">Calculators</Link>
+          <Link href={categoryPath('PDF Tools')} className="rounded-full px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary">PDF tools</Link>
         </nav>
         <form onSubmit={submitSearch} className="ml-auto hidden max-w-[260px] flex-1 items-center gap-2 rounded-full border border-border bg-card px-3 py-2 sm:flex">
           <Search size={16} className="text-muted-foreground" />
-          <input value={query} onChange={(e) => setQuery(e.target.value)} className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground" placeholder="Find a tool..." />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground" placeholder="Search 84 tools..." />
           {query && <button type="button" onClick={() => setQuery('')} className="text-muted-foreground hover:text-foreground"><X size={14} /></button>}
         </form>
         <button aria-label="Toggle theme" onClick={toggleTheme} className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:border-primary hover:text-primary">
@@ -90,7 +96,7 @@ function Header() {
         <div className="border-t border-border bg-card px-4 py-3 md:hidden">
           <form onSubmit={submitSearch} className="mb-2 flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2">
             <Search size={16} className="text-muted-foreground" />
-            <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} className="min-w-0 flex-1 bg-transparent py-1 text-sm outline-none" placeholder="Search 69 tools" />
+            <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} className="min-w-0 flex-1 bg-transparent py-1 text-sm outline-none" placeholder="Search 84 tools" />
           </form>
           <Link onClick={() => setOpen(false)} href="/tools" className="block rounded-lg px-3 py-3 text-sm font-semibold">Browse all tools</Link>
           {categories.map((cat) => (
@@ -110,15 +116,15 @@ function Footer() {
           <div className="flex items-center gap-2 font-display font-bold">
             <span className="grid h-7 w-7 place-items-center rounded-lg bg-primary text-primary-foreground"><Zap size={14} fill="currentColor" /></span> all in one tools
           </div>
-          <p className="mt-3 max-w-xs text-sm leading-6 text-muted-foreground">Free, lightweight client-side tools running in your browser. Private, ultra-fast, and unlimited.</p>
+          <p className="mt-3 max-w-xs text-sm leading-6 text-muted-foreground">Free, client-side tools running directly in your browser. Private, ultra-fast, and unlimited.</p>
         </div>
         <div>
           <p className="mb-3 text-xs font-bold uppercase tracking-[.16em] text-muted-foreground">Categories</p>
           <div className="grid gap-2 text-sm">
             <Link href="/tools" className="hover:text-primary">All tools</Link>
-            <Link href={categoryPath('PDF Tools')} className="hover:text-primary">PDF tools</Link>
+            <Link href={categoryPath('Calculators')} className="hover:text-primary">Calculators & Wealth</Link>
             <Link href={categoryPath('Image Tools')} className="hover:text-primary">Image tools</Link>
-            <Link href={categoryPath('Calculators')} className="hover:text-primary">Calculators</Link>
+            <Link href={categoryPath('PDF Tools')} className="hover:text-primary">PDF tools</Link>
           </div>
         </div>
         <div>
@@ -132,7 +138,7 @@ function Footer() {
         <div>
           <p className="mb-3 text-xs font-bold uppercase tracking-[.16em] text-muted-foreground">Our Guarantee</p>
           <p className="font-display text-lg font-bold">100% Private.<br />Real Results.</p>
-          <p className="mt-2 text-xs text-muted-foreground">Files are processed in your browser memory and never uploaded to remote servers.</p>
+          <p className="mt-2 text-xs text-muted-foreground">Runs locally in browser memory. No data sent to any server.</p>
         </div>
       </div>
       <div className="mx-auto flex max-w-7xl items-center justify-between border-t border-border px-4 py-5 text-xs text-muted-foreground sm:px-6">
@@ -195,13 +201,13 @@ function Home() {
 
   return (
     <Shell>
-      <PageMeta title="Simple Tools. Real Results." description="69+ free, fast and private online utilities for everyday work." />
+      <PageMeta title="Simple Tools. Real Results." description="84+ free, fast and private online utilities for everyday work." />
       <main>
         <section className="relative overflow-hidden border-b border-border bg-primary text-primary-foreground">
           <div className="relative mx-auto grid max-w-7xl gap-10 px-4 pb-14 pt-14 sm:px-6 md:grid-cols-[1.1fr_.9fr] md:items-end md:pb-20 md:pt-20">
             <div>
               <p className="mb-5 flex items-center gap-2 font-mono-app text-[11px] uppercase tracking-[.2em] text-primary-foreground/70">
-                <span className="h-2 w-2 rounded-full bg-accent" /> 69+ tools, no file upload needed
+                <span className="h-2 w-2 rounded-full bg-accent" /> 84+ tools, no file upload needed
               </p>
               <h1 className="max-w-xl font-display text-[clamp(2.5rem,6vw,5rem)] font-bold leading-[1] tracking-[-.05em]">
                 Har Kaam Ke Liye<br /><span className="text-accent">Ek Tool.</span>
@@ -213,12 +219,12 @@ function Home() {
             <div className="rounded-3xl border border-primary-foreground/15 bg-primary-foreground/[.08] p-3 shadow-xl">
               <form onSubmit={submit} className="flex items-center gap-3 rounded-2xl bg-background p-2 text-foreground">
                 <Search className="ml-2 text-muted-foreground" size={21} />
-                <input value={heroSearch} onChange={(e) => setHeroSearch(e.target.value)} className="min-w-0 flex-1 bg-transparent px-1 py-3 text-sm outline-none placeholder:text-muted-foreground" placeholder="Search 69 tools..." />
+                <input value={heroSearch} onChange={(e) => setHeroSearch(e.target.value)} className="min-w-0 flex-1 bg-transparent px-1 py-3 text-sm outline-none placeholder:text-muted-foreground" placeholder="Search 84 tools (e.g. sip, byaj, 20kb, photo to pdf)..." />
                 <button className="flex shrink-0 items-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-bold text-accent-foreground transition hover:brightness-105">Find tool <ArrowRight size={16} /></button>
               </form>
               <div className="flex flex-wrap gap-2 px-2 pb-1 pt-3 text-[11px] text-primary-foreground/65">
-                <span>Try:</span>
-                {['image compress', 'pdf merge', 'word counter', 'emi calculator', 'images to pdf'].map((item) => (
+                <span>Popular:</span>
+                {['sip calculator', 'image compress', 'stock average', 'ppf calculator', 'fuel cost', 'word counter'].map((item) => (
                   <button type="button" onClick={() => setHeroSearch(item)} key={item} className="underline decoration-primary-foreground/25 underline-offset-2 hover:text-primary-foreground">{item}</button>
                 ))}
               </div>
@@ -243,9 +249,14 @@ function Home() {
           </section>
 
           <section className="pb-14">
-            <h2 className="mb-5 font-display text-2xl font-bold tracking-[-.04em]">Popular Tools</h2>
+            <div className="mb-5 flex items-end justify-between">
+              <div>
+                <p className="font-mono-app text-[11px] uppercase tracking-[.16em] text-accent">Popular right now</p>
+                <h2 className="mt-1 font-display text-2xl font-bold tracking-[-.04em]">Trending Tools</h2>
+              </div>
+            </div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {popular.slice(0, 4).map((tool, i) => (
+              {popular.slice(0, 8).map((tool, i) => (
                 <ToolCard featured={i === 0} key={tool.slug} tool={tool} />
               ))}
             </div>
@@ -260,8 +271,18 @@ function ToolsPage() {
   const params = new URLSearchParams(window.location.search);
   const [query, setQuery] = useState(params.get('search') || '');
   const [active, setActive] = useState<Category | 'All'>('All');
+
   const shown = useMemo(() => {
-    return tools.filter((tool) => (active === 'All' || tool.category === active) && `${tool.name} ${tool.description} ${tool.category}`.toLowerCase().includes(query.toLowerCase()));
+    const q = query.trim().toLowerCase();
+    return tools.filter((tool) => {
+      const matchesCategory = active === 'All' || tool.category === active;
+      const matchesSearch =
+        !q ||
+        tool.name.toLowerCase().includes(q) ||
+        tool.description.toLowerCase().includes(q) ||
+        (tool.keywords && tool.keywords.some((k) => k.toLowerCase().includes(q)));
+      return matchesCategory && matchesSearch;
+    });
   }, [active, query]);
 
   return (
@@ -269,13 +290,13 @@ function ToolsPage() {
       <PageMeta title="All Tools" />
       <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 md:py-14">
         <div className="max-w-2xl">
-          <h1 className="font-display text-4xl font-bold tracking-[-.06em] md:text-5xl">All 69 Tools</h1>
-          <p className="mt-3 text-muted-foreground">Select a tool or filter by specific category.</p>
+          <h1 className="font-display text-4xl font-bold tracking-[-.06em] md:text-5xl">All {tools.length} Tools</h1>
+          <p className="mt-3 text-muted-foreground">Search by tool name or common words (e.g. byaj, sip, 20kb, kist).</p>
         </div>
         <div className="mt-8 flex flex-col gap-3 lg:flex-row">
           <label className="flex flex-1 items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-sm">
             <Search size={19} className="text-muted-foreground" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} className="min-w-0 flex-1 bg-transparent text-sm outline-none" placeholder="Search 69 tools..." />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} className="min-w-0 flex-1 bg-transparent text-sm outline-none" placeholder="Search by name or keyword..." />
             {query && <button onClick={() => setQuery('')}><X size={16} /></button>}
           </label>
           <div className="flex gap-2 overflow-x-auto pb-1">
@@ -286,7 +307,10 @@ function ToolsPage() {
             ))}
           </div>
         </div>
-        <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="mt-6 flex justify-between text-xs text-muted-foreground font-semibold">
+          <span>Found {shown.length} tools</span>
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {shown.map((tool) => <ToolCard key={tool.slug} tool={tool} />)}
         </div>
       </main>
@@ -336,7 +360,7 @@ function ResultBox({ result, onCopy, onDownload }: { result: string; onCopy: () 
   return (
     <div className="mt-5 rounded-2xl border border-primary/20 bg-primary/[.06] p-4">
       <div className="mb-3 flex items-center justify-between">
-        <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-[.12em] text-primary"><Check size={14} /> Result</span>
+        <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-[.12em] text-primary"><Check size={14} /> Result Summary</span>
         <div className="flex gap-1">
           <button title="Copy result" onClick={onCopy} className="rounded-lg p-2 text-muted-foreground hover:bg-primary/10 hover:text-primary"><Copy size={15} /></button>
           <button title="Download result" onClick={onDownload} className="rounded-lg p-2 text-muted-foreground hover:bg-primary/10 hover:text-primary"><Download size={15} /></button>
@@ -414,10 +438,11 @@ function TextTool({ tool }: { tool: Tool }) {
 }
 
 // =========================================================
-// 2. CALCULATORS COMPONENT (15 Tools)
+// 2. CALCULATORS & FINANCIAL COMPONENT (30 Tools)
 // =========================================================
 function CalculatorTool({ tool }: { tool: Tool }) {
   const [values, setValues] = useState<Record<string, string>>({ a: '', b: '', c: '', d: '' });
+  const [isMetro, setIsMetro] = useState(false);
   const [unitType, setUnitType] = useState('length');
   const [fromUnit, setFromUnit] = useState('m');
   const [toUnit, setToUnit] = useState('km');
@@ -431,6 +456,101 @@ function CalculatorTool({ tool }: { tool: Tool }) {
     const a = Number(values.a), b = Number(values.b), c = Number(values.c), d = Number(values.d);
     setError('');
 
+    // SIP
+    if (tool.slug === 'sip-calculator') {
+      if (!a || !b || !c) { setError('Please enter monthly investment, expected return rate, and time period.'); return; }
+      const res = calculateSIP(a, b, c);
+      setResult(`Total Invested Amount: ₹${formatNumber(res.invested)}\nEstimated Wealth Gained: ₹${formatNumber(res.returns)}\nTotal Maturity Value: ₹${formatNumber(res.total)}`);
+      return;
+    }
+
+    // Lumpsum
+    if (tool.slug === 'lumpsum-calculator') {
+      if (!a || !b || !c) { setError('Enter total investment, expected return rate, and years.'); return; }
+      const res = calculateLumpsum(a, b, c);
+      setResult(`Invested Amount: ₹${formatNumber(res.invested)}\nEstimated Wealth Gained: ₹${formatNumber(res.returns)}\nTotal Future Value: ₹${formatNumber(res.total)}`);
+      return;
+    }
+
+    // PPF
+    if (tool.slug === 'ppf-calculator') {
+      if (!a) { setError('Enter annual investment amount.'); return; }
+      const res = calculatePPF(a, b || 7.1, c || 15);
+      setResult(`Total Investment (15 Yrs): ₹${formatNumber(res.invested)}\nTotal Interest Earned: ₹${formatNumber(res.returns)}\nMaturity Amount: ₹${formatNumber(res.total)}`);
+      return;
+    }
+
+    // Stock Average
+    if (tool.slug === 'stock-average-calculator') {
+      if (!a || !b || !c || !d) { setError('Enter quantity and price for both 1st and 2nd buy.'); return; }
+      const res = calculateStockAverage(a, b, c, d);
+      setResult(`Total Shares Held: ${res.totalQty}\nTotal Money Invested: ₹${formatNumber(res.totalCost)}\nNew Average Buying Price: ₹${res.avgPrice} per share`);
+      return;
+    }
+
+    // HRA
+    if (tool.slug === 'hra-calculator') {
+      if (!a || !b || !c) { setError('Enter basic monthly salary, HRA received, and rent paid.'); return; }
+      const res = calculateHRA(a, 0, b, c, isMetro);
+      setResult(`Exempt HRA (Tax-Free): ₹${formatNumber(res.exemptHRA)}\nTaxable HRA: ₹${formatNumber(res.taxableHRA)}`);
+      return;
+    }
+
+    // Fuel Cost
+    if (tool.slug === 'fuel-cost-calculator') {
+      if (!a || !b || !c) { setError('Enter total distance (km), vehicle mileage (km/l), and fuel price.'); return; }
+      const litersNeeded = a / b;
+      const totalCost = litersNeeded * c;
+      const perPerson = d > 0 ? totalCost / d : totalCost;
+      setResult(`Total Fuel Required: ${litersNeeded.toFixed(1)} Liters\nTotal Fuel Expense: ₹${formatNumber(Math.round(totalCost))}${d > 0 ? `\nCost per person (${d} people): ₹${formatNumber(Math.round(perPerson))}` : ''}`);
+      return;
+    }
+
+    // Salary In Hand
+    if (tool.slug === 'salary-calculator') {
+      if (!a) { setError('Enter your monthly CTC or Gross Salary.'); return; }
+      const pf = Math.min(1800, a * 0.12);
+      const profTax = 200;
+      const inHand = a - pf - profTax;
+      setResult(`Gross Monthly Salary: ₹${formatNumber(a)}\nEstimated EPF Deduction: ₹${formatNumber(Math.round(pf))}\nProfessional Tax: ₹${profTax}\nApprox. In-Hand Monthly Pay: ₹${formatNumber(Math.round(inHand))}`);
+      return;
+    }
+
+    // CAGR
+    if (tool.slug === 'cagr-calculator') {
+      if (!a || !b || !c) { setError('Enter initial value, final value, and years.'); return; }
+      const cagr = calculateCAGR(a, b, c);
+      setResult(`Compound Annual Growth Rate (CAGR): ${cagr}% per year`);
+      return;
+    }
+
+    // Calorie / TDEE
+    if (tool.slug === 'calorie-calculator') {
+      if (!a || !b || !c) { setError('Enter weight (kg), height (cm), and age.'); return; }
+      const bmr = 10 * a + 6.25 * b - 5 * c + 5;
+      setResult(`Daily Maintenance (TDEE): ~${Math.round(bmr * 1.375)} kcal\nWeight Loss Goal: ~${Math.round(bmr * 1.375 - 400)} kcal/day\nWeight Gain Goal: ~${Math.round(bmr * 1.375 + 400)} kcal/day`);
+      return;
+    }
+
+    // Tip Splitter
+    if (tool.slug === 'tip-calculator') {
+      if (!a) { setError('Enter bill amount.'); return; }
+      const tipAmount = a * ((b || 10) / 100);
+      const total = a + tipAmount;
+      const split = c > 0 ? total / c : total;
+      setResult(`Tip Amount: ₹${formatNumber(tipAmount)}\nTotal Bill: ₹${formatNumber(total)}${c > 0 ? `\nPer Person (${c} people): ₹${formatNumber(Math.round(split))}` : ''}`);
+      return;
+    }
+
+    // Water Intake
+    if (tool.slug === 'water-intake-calculator') {
+      if (!a) { setError('Enter body weight in kg.'); return; }
+      const waterLiters = (a * 0.033).toFixed(1);
+      setResult(`Recommended Daily Water Intake: ${waterLiters} Liters (~${Math.round(Number(waterLiters) * 4)} glasses)`);
+      return;
+    }
+
+    // Unit Converter
     if (tool.slug === 'unit-converter') {
       if (!values.a || isNaN(a)) { setError('Enter a valid value'); return; }
       const res = convertUnits(a, unitType, fromUnit, toUnit);
@@ -438,19 +558,21 @@ function CalculatorTool({ tool }: { tool: Tool }) {
       return;
     }
 
+    // Fraction Calculator
     if (tool.slug === 'fraction-calculator') {
-      if (!values.a || !values.b || !values.c || !values.d) { setError('Fill numerator and denominator for both fractions'); return; }
-      const res = calculateFractions(a, b, c, d, fractionOp);
-      setResult(`Fraction Result: ${res}`);
+      if (!values.a || !values.b || !values.c || !values.d) { setError('Fill all fraction boxes'); return; }
+      setResult(`Result: ${calculateFractions(a, b, c, d, fractionOp)}`);
       return;
     }
 
+    // Ratio Simplifier
     if (tool.slug === 'ratio-calculator') {
       if (!a || !b) { setError('Enter width and height'); return; }
       setResult(`Simplified Ratio: ${simplifyRatio(a, b)}`);
       return;
     }
 
+    // Time Calculator
     if (tool.slug === 'time-calculator') {
       const h1 = Number(values.a) || 0, m1 = Number(values.b) || 0;
       const h2 = Number(values.c) || 0, m2 = Number(values.d) || 0;
@@ -468,7 +590,10 @@ function CalculatorTool({ tool }: { tool: Tool }) {
     else if (tool.slug === 'simple-interest-calculator') answer = `Interest: ₹${formatNumber(a * b * c / 100)}\nTotal Amount: ₹${formatNumber(a + a * b * c / 100)}`;
     else if (tool.slug === 'compound-interest-calculator') { const total = a * (1 + b / 100) ** c; answer = `Interest: ₹${formatNumber(total - a)}\nTotal Amount: ₹${formatNumber(total)}`; }
     else if (tool.slug === 'emi-calculator') { const monthly = b / 1200; const emi = a * monthly * (1 + monthly) ** c / ((1 + monthly) ** c - 1); answer = `Monthly EMI: ₹${formatNumber(emi)}\nTotal Payment: ₹${formatNumber(emi * c)}\nTotal Interest: ₹${formatNumber(emi * c - a)}`; }
-    else if (tool.slug === 'average-calculator') { const nums = values.a.split(',').map(Number).filter(Number.isFinite); answer = `Average: ${formatNumber(nums.reduce((x, y) => x + y, 0) / Math.max(1, nums.length))}\nTotal Sum: ${nums.reduce((x, y) => x + y, 0)}`; }
+    else if (tool.slug === 'fd-calculator') { const total = a * (1 + b / 400) ** (4 * c); answer = `Total Maturity Amount: ₹${formatNumber(Math.round(total))}\nInterest Earned: ₹${formatNumber(Math.round(total - a))}`; }
+    else if (tool.slug === 'rd-calculator') { const n = c * 12; const totalDeposit = a * n; const r = b / 100; const interest = a * (n * (n + 1) / 24) * r; answer = `Total Deposited: ₹${formatNumber(totalDeposit)}\nTotal Interest: ₹${formatNumber(Math.round(interest))}\nMaturity Value: ₹${formatNumber(Math.round(totalDeposit + interest))}`; }
+    else if (tool.slug === 'inflation-calculator') { const future = a * (1 + (b || 6) / 100) ** c; answer = `Purchasing Cost in ${c} Years: ₹${formatNumber(Math.round(future))}\nPrice Increase: ₹${formatNumber(Math.round(future - a))}`; }
+    else if (tool.slug === 'average-calculator') { const nums = values.a.split(',').map(Number).filter(Number.isFinite); answer = `Average: ${formatNumber(nums.reduce((x, y) => x + y, 0) / Math.max(1, nums.length))}`; }
     else if (tool.slug === 'date-difference-calculator') answer = `${Math.abs(Math.round((new Date(values.b).getTime() - new Date(values.a).getTime()) / 86400000)).toLocaleString()} days difference`;
     else if (tool.slug === 'age-calculator') {
       const born = new Date(values.a), now = new Date(values.b || Date.now());
@@ -484,7 +609,51 @@ function CalculatorTool({ tool }: { tool: Tool }) {
 
   return (
     <div className="max-w-2xl">
-      {tool.slug === 'unit-converter' ? (
+      {tool.slug === 'sip-calculator' ? (
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Field label="Monthly Investment (₹)" value={values.a} onChange={update('a')} type="number" placeholder="5000" />
+          <Field label="Expected Return Rate (%)" value={values.b} onChange={update('b')} type="number" placeholder="12" />
+          <Field label="Time Period (Years)" value={values.c} onChange={update('c')} type="number" placeholder="10" />
+        </div>
+      ) : tool.slug === 'stock-average-calculator' ? (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4 rounded-xl border p-3">
+            <p className="col-span-2 text-xs font-bold text-primary">First Purchase</p>
+            <Field label="Quantity" value={values.a} onChange={update('a')} type="number" placeholder="100" />
+            <Field label="Buy Price (₹)" value={values.b} onChange={update('b')} type="number" placeholder="250" />
+          </div>
+          <div className="grid grid-cols-2 gap-4 rounded-xl border p-3">
+            <p className="col-span-2 text-xs font-bold text-accent">Second Purchase (Dip Buy)</p>
+            <Field label="Quantity" value={values.c} onChange={update('c')} type="number" placeholder="100" />
+            <Field label="Buy Price (₹)" value={values.d} onChange={update('d')} type="number" placeholder="200" />
+          </div>
+        </div>
+      ) : tool.slug === 'hra-calculator' ? (
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field label="Monthly Basic Pay (₹)" value={values.a} onChange={update('a')} type="number" placeholder="40000" />
+            <Field label="Monthly HRA Received (₹)" value={values.b} onChange={update('b')} type="number" placeholder="15000" />
+            <Field label="Monthly Rent Paid (₹)" value={values.c} onChange={update('c')} type="number" placeholder="18000" />
+          </div>
+          <label className="flex items-center gap-2 text-sm font-semibold">
+            <input type="checkbox" checked={isMetro} onChange={(e) => setIsMetro(e.target.checked)} />
+            Living in Metro City (Delhi, Mumbai, Kolkata, Chennai)
+          </label>
+        </div>
+      ) : tool.slug === 'fuel-cost-calculator' ? (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Total Distance (in KM)" value={values.a} onChange={update('a')} type="number" placeholder="350" />
+          <Field label="Vehicle Mileage (KM / Liter)" value={values.b} onChange={update('b')} type="number" placeholder="16" />
+          <Field label="Fuel Price per Liter (₹)" value={values.c} onChange={update('c')} type="number" placeholder="96" />
+          <Field label="Split Between Passengers (Optional)" value={values.d} onChange={update('d')} type="number" placeholder="4" />
+        </div>
+      ) : tool.slug === 'cagr-calculator' ? (
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Field label="Initial Investment (₹)" value={values.a} onChange={update('a')} type="number" placeholder="100000" />
+          <Field label="Final Value (₹)" value={values.b} onChange={update('b')} type="number" placeholder="250000" />
+          <Field label="Years" value={values.c} onChange={update('c')} type="number" placeholder="5" />
+        </div>
+      ) : tool.slug === 'unit-converter' ? (
         <div className="space-y-4">
           <div className="flex gap-2">
             {['length', 'weight', 'temperature'].map((t) => (
@@ -551,8 +720,8 @@ function CalculatorTool({ tool }: { tool: Tool }) {
             <><Field label="Start Date / DOB" value={values.a} onChange={update('a')} type="date" /><Field label="End Date / Today" value={values.b} onChange={update('b')} type="date" /></>
           ) : tool.slug === 'emi-calculator' ? (
             <><Field label="Loan Amount (₹)" value={values.a} onChange={update('a')} type="number" /><Field label="Annual Interest (%)" value={values.b} onChange={update('b')} type="number" /><Field label="Months" value={values.c} onChange={update('c')} type="number" /></>
-          ) : tool.slug === 'simple-interest-calculator' || tool.slug === 'compound-interest-calculator' ? (
-            <><Field label="Principal (₹)" value={values.a} onChange={update('a')} type="number" /><Field label="Annual Rate (%)" value={values.b} onChange={update('b')} type="number" /><Field label="Time (Years)" value={values.c} onChange={update('c')} type="number" /></>
+          ) : tool.slug === 'fd-calculator' || tool.slug === 'rd-calculator' || tool.slug === 'simple-interest-calculator' || tool.slug === 'compound-interest-calculator' ? (
+            <><Field label="Principal / Monthly Deposit (₹)" value={values.a} onChange={update('a')} type="number" /><Field label="Annual Interest Rate (%)" value={values.b} onChange={update('b')} type="number" /><Field label="Time Period (Years)" value={values.c} onChange={update('c')} type="number" /></>
           ) : (
             <><Field label="Price / Value 1" value={values.a} onChange={update('a')} type="number" /><Field label="Percentage / Value 2" value={values.b} onChange={update('b')} type="number" /></>
           )}
@@ -699,7 +868,7 @@ function CodeTool({ tool }: { tool: Tool }) {
 }
 
 // =========================================================
-// 5. IMAGE TOOLS COMPONENT (15 Tools)
+// 5. IMAGE TOOLS COMPONENT (15 Tools - FULL & UNCUT)
 // =========================================================
 function ImageTool({ tool }: { tool: Tool }) {
   const [file, setFile] = useState<File | null>(null);
@@ -945,7 +1114,7 @@ function ImageTool({ tool }: { tool: Tool }) {
 }
 
 // =========================================================
-// 6. PDF TOOLS COMPONENT (10 Tools)
+// 6. PDF TOOLS COMPONENT (10 Tools - FULL & UNCUT)
 // =========================================================
 function parsePageSelection(value: string, total: number) {
   const pages = new Set<number>();
@@ -977,7 +1146,7 @@ function PdfTool({ tool }: { tool: Tool }) {
     try {
       const { PDFDocument, StandardFonts, rgb, degrees } = await import('pdf-lib');
 
-      // 1. Images to PDF
+      // Images to PDF
       if (isImgToPdf) {
         const doc = await PDFDocument.create();
         for (const file of files) {
@@ -992,7 +1161,7 @@ function PdfTool({ tool }: { tool: Tool }) {
         return;
       }
 
-      // 2. PDF Merge
+      // PDF Merge
       if (tool.slug === 'pdf-merge') {
         const mergedPdf = await PDFDocument.create();
         for (const file of files) {
@@ -1005,7 +1174,7 @@ function PdfTool({ tool }: { tool: Tool }) {
       } else {
         const source = await PDFDocument.load(await files[0].arrayBuffer());
 
-        // 3. PDF Split / Extract Pages
+        // Split / Extract
         if (tool.slug === 'pdf-split' || tool.slug === 'pdf-extract-pages') {
           const selected = parsePageSelection(pages, source.getPageCount());
           if (!selected.length) throw new Error('Specify pages like 1 or 1-3.');
@@ -1015,7 +1184,7 @@ function PdfTool({ tool }: { tool: Tool }) {
           const bytes = await out.save();
           setResults([{ name: `${tool.slug}-pages.pdf`, url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
         }
-        // 4. Delete Pages
+        // Delete Pages
         else if (tool.slug === 'pdf-delete-pages') {
           const toDelete = new Set(parsePageSelection(pages, source.getPageCount()));
           const keepIndices = source.getPageIndices().filter((idx) => !toDelete.has(idx));
@@ -1026,13 +1195,13 @@ function PdfTool({ tool }: { tool: Tool }) {
           const bytes = await out.save();
           setResults([{ name: 'pages-removed.pdf', url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
         }
-        // 5. Rotate PDF
+        // Rotate
         else if (tool.slug === 'pdf-rotate') {
           source.getPages().forEach((p) => p.setRotation(degrees((p.getRotation().angle + 90) % 360)));
           const bytes = await source.save();
           setResults([{ name: 'rotated.pdf', url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
         }
-        // 6. Watermark PDF
+        // Watermark
         else if (tool.slug === 'pdf-watermark') {
           const font = await source.embedFont(StandardFonts.HelveticaBold);
           source.getPages().forEach((p) => {
@@ -1042,7 +1211,7 @@ function PdfTool({ tool }: { tool: Tool }) {
           const bytes = await source.save();
           setResults([{ name: 'watermarked.pdf', url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
         }
-        // 7. Remove Metadata / Compress PDF
+        // Metadata Remover & PDF Compress
         else {
           source.setTitle('');
           source.setAuthor('');
@@ -1116,7 +1285,7 @@ function PdfTool({ tool }: { tool: Tool }) {
 }
 
 // =========================================================
-// ROUTING TO CORRECT 69 TOOL SUITE
+// ROUTING TO 84 ACTIVE TOOLS
 // =========================================================
 function ToolPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -1126,22 +1295,21 @@ function ToolPage() {
   const Icon = getIcon(tool.icon);
 
   const textSlugs = ['word-counter','character-counter','case-converter','remove-extra-spaces','text-sorter','duplicate-line-remover','text-reverser','text-cleaner','slug-generator','lorem-ipsum-generator'];
-  const calcSlugs = ['percentage-calculator','age-calculator','bmi-calculator','discount-calculator','gst-calculator','profit-loss-calculator','emi-calculator','simple-interest-calculator','compound-interest-calculator','date-difference-calculator','time-calculator','average-calculator','ratio-calculator','fraction-calculator','unit-converter'];
   const devSlugs = ['qr-code-generator','barcode-generator','password-generator','uuid-generator','random-number-generator','color-picker','hex-to-rgb-converter','timestamp-converter','number-to-words'];
   const codeSlugs = ['json-formatter','json-minifier','html-formatter','css-formatter','javascript-formatter','xml-formatter','yaml-formatter','base64-encoder-decoder','url-encoder-decoder','text-encrypt-decrypt'];
   const imageSlugs = ['image-resize','image-compress','jpg-to-png','png-to-jpg','webp-converter','image-crop','image-rotate','image-flip','image-grayscale','image-blur','image-sharpen','image-brightness','image-contrast','image-watermark','favicon-generator'];
 
   const toolView = textSlugs.includes(tool.slug)
     ? <TextTool tool={tool} />
-    : calcSlugs.includes(tool.slug)
-    ? <CalculatorTool tool={tool} />
     : devSlugs.includes(tool.slug)
     ? <GeneratorTool tool={tool} />
     : codeSlugs.includes(tool.slug)
     ? <CodeTool tool={tool} />
     : imageSlugs.includes(tool.slug)
     ? <ImageTool tool={tool} />
-    : <PdfTool tool={tool} />;
+    : tool.category === 'PDF Tools'
+    ? <PdfTool tool={tool} />
+    : <CalculatorTool tool={tool} />;
 
   return (
     <Shell>
