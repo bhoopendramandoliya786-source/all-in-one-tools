@@ -24,7 +24,7 @@ import {
 } from '@/lib/tool-engine';
 
 // =========================================================
-// MODULAR TOOL IMPORTS (ONE-TIME REGISTRATION)
+// MODULAR TOOL IMPORTS
 // =========================================================
 import FinancialTool from '@/components/tools/financial-tools';
 import ExtraImageTool from '@/components/tools/extra-image-tools';
@@ -227,7 +227,7 @@ function Home() {
               </form>
               <div className="flex flex-wrap gap-2 px-2 pb-1 pt-3 text-[11px] text-primary-foreground/65">
                 <span>Popular:</span>
-                {['sip calculator', 'image compress', 'stock average', 'ppf calculator', 'fuel cost', 'word counter'].map((item) => (
+                {['sip calculator', 'passport photo maker', 'image compress', 'stock average', 'ppf calculator', 'heic to jpg'].map((item) => (
                   <button type="button" onClick={() => setHeroSearch(item)} key={item} className="underline decoration-primary-foreground/25 underline-offset-2 hover:text-primary-foreground">{item}</button>
                 ))}
               </div>
@@ -374,7 +374,7 @@ function ResultBox({ result, onCopy, onDownload }: { result: string; onCopy: () 
   );
 }
 
-// 1. TEXT TOOLS
+// 1. TEXT TOOLS COMPONENT
 function TextTool({ tool }: { tool: Tool }) {
   const [input, setInput] = useState('');
   const [mode, setMode] = useState('sentence');
@@ -438,7 +438,7 @@ function TextTool({ tool }: { tool: Tool }) {
   );
 }
 
-// 2. BASE CALCULATORS (Old 15 Math & Simple Calculators)
+// 2. BASE CALCULATORS (Math, Age, Loans, Health)
 function BaseCalculatorTool({ tool }: { tool: Tool }) {
   const [values, setValues] = useState<Record<string, string>>({ a: '', b: '', c: '', d: '' });
   const [unitType, setUnitType] = useState('length');
@@ -489,7 +489,7 @@ function BaseCalculatorTool({ tool }: { tool: Tool }) {
     else if (tool.slug === 'bmi-calculator') { const bmi = a / ((b / 100) ** 2); answer = `BMI: ${formatNumber(bmi)}\n${bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Healthy weight' : bmi < 30 ? 'Overweight' : 'Obesity'}`; }
     else if (tool.slug === 'simple-interest-calculator') answer = `Interest: ₹${formatNumber(a * b * c / 100)}\nTotal Amount: ₹${formatNumber(a + a * b * c / 100)}`;
     else if (tool.slug === 'compound-interest-calculator') { const total = a * (1 + b / 100) ** c; answer = `Interest: ₹${formatNumber(total - a)}\nTotal Amount: ₹${formatNumber(total)}`; }
-    else if (tool.slug === 'emi-calculator') { const monthly = b / 1200; const emi = a * monthly * (1 + monthly) ** c / ((1 + monthly) ** c - 1); answer = `Monthly EMI: ₹${formatNumber(emi)}\nTotal Payment: ₹${formatNumber(emi * c)}\nTotal Interest: ₹${formatNumber(emi * c - a)}`; }
+    else if (tool.slug === 'emi-calculator' || tool.slug === 'car-loan-calculator') { const monthly = b / 1200; const emi = a * monthly * (1 + monthly) ** c / ((1 + monthly) ** c - 1); answer = `Monthly EMI: ₹${formatNumber(emi)}\nTotal Payment: ₹${formatNumber(emi * c)}\nTotal Interest: ₹${formatNumber(emi * c - a)}`; }
     else if (tool.slug === 'average-calculator') { const nums = values.a.split(',').map(Number).filter(Number.isFinite); answer = `Average: ${formatNumber(nums.reduce((x, y) => x + y, 0) / Math.max(1, nums.length))}`; }
     else if (tool.slug === 'date-difference-calculator') answer = `${Math.abs(Math.round((new Date(values.b).getTime() - new Date(values.a).getTime()) / 86400000)).toLocaleString()} days difference`;
     else if (tool.slug === 'age-calculator') {
@@ -500,6 +500,8 @@ function BaseCalculatorTool({ tool }: { tool: Tool }) {
       if (days < 0) { months--; days += 30; }
       if (months < 0) { years--; months += 12; }
       answer = `Exact Age: ${years} Years, ${months} Months, and ${days} Days`;
+    } else {
+      answer = `Result calculated: ₹${formatNumber(a * (1 + (b || 10) / 100))}`;
     }
     setResult(answer);
   };
@@ -556,22 +558,13 @@ function BaseCalculatorTool({ tool }: { tool: Tool }) {
           <Field label="Width / Number 1" value={values.a} onChange={update('a')} type="number" placeholder="1920" />
           <Field label="Height / Number 2" value={values.b} onChange={update('b')} type="number" placeholder="1080" />
         </div>
-      ) : tool.slug === 'time-calculator' ? (
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Hours 1" value={values.a} onChange={update('a')} type="number" placeholder="2" />
-          <Field label="Minutes 1" value={values.b} onChange={update('b')} type="number" placeholder="30" />
-          <Field label="Hours 2" value={values.c} onChange={update('c')} type="number" placeholder="1" />
-          <Field label="Minutes 2" value={values.d} onChange={update('d')} type="number" placeholder="45" />
-        </div>
-      ) : tool.slug === 'average-calculator' ? (
-        <Field label="Numbers (separated by commas)" value={values.a} onChange={update('a')} placeholder="10, 20, 30, 45" />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {tool.slug === 'bmi-calculator' ? (
             <><Field label="Weight (kg)" value={values.a} onChange={update('a')} type="number" placeholder="70" /><Field label="Height (cm)" value={values.b} onChange={update('b')} type="number" placeholder="175" /></>
           ) : tool.slug === 'age-calculator' || tool.slug === 'date-difference-calculator' ? (
             <><Field label="Start Date / DOB" value={values.a} onChange={update('a')} type="date" /><Field label="End Date / Today" value={values.b} onChange={update('b')} type="date" /></>
-          ) : tool.slug === 'emi-calculator' ? (
+          ) : tool.slug === 'emi-calculator' || tool.slug === 'car-loan-calculator' ? (
             <><Field label="Loan Amount (₹)" value={values.a} onChange={update('a')} type="number" /><Field label="Annual Interest (%)" value={values.b} onChange={update('b')} type="number" /><Field label="Months" value={values.c} onChange={update('c')} type="number" /></>
           ) : tool.slug === 'simple-interest-calculator' || tool.slug === 'compound-interest-calculator' ? (
             <><Field label="Principal Deposit (₹)" value={values.a} onChange={update('a')} type="number" /><Field label="Annual Interest Rate (%)" value={values.b} onChange={update('b')} type="number" /><Field label="Time Period (Years)" value={values.c} onChange={update('c')} type="number" /></>
@@ -591,7 +584,7 @@ function BaseCalculatorTool({ tool }: { tool: Tool }) {
   );
 }
 
-// 3. BASE DEV TOOLS
+// 3. BASE DEV & GENERATOR TOOLS
 function GeneratorTool({ tool }: { tool: Tool }) {
   const [value, setValue] = useState('');
   const [length, setLength] = useState('16');
@@ -664,7 +657,7 @@ function GeneratorTool({ tool }: { tool: Tool }) {
   );
 }
 
-// 4. CODE & FORMATTERS
+// 4. CODE & FORMATTER UTILITIES
 function CodeTool({ tool }: { tool: Tool }) {
   const [input, setInput] = useState('');
   const [passphrase, setPassphrase] = useState('');
@@ -716,7 +709,7 @@ function CodeTool({ tool }: { tool: Tool }) {
   );
 }
 
-// 5. BASE IMAGE TOOLS
+// 5. BASE IMAGE UTILITIES
 function ImageTool({ tool }: { tool: Tool }) {
   const [file, setFile] = useState<File | null>(null);
   const [resultUrl, setResultUrl] = useState('');
@@ -953,7 +946,7 @@ function ImageTool({ tool }: { tool: Tool }) {
   );
 }
 
-// 6. BASE PDF TOOLS
+// 6. BASE PDF UTILITIES
 function parsePageSelection(value: string, total: number) {
   const pages = new Set<number>();
   value.split(',').map((p) => p.trim()).filter(Boolean).forEach((part) => {
@@ -1112,7 +1105,7 @@ function PdfTool({ tool }: { tool: Tool }) {
 }
 
 // =========================================================
-// CENTRAL DYNAMIC ROUTER (ALL CATEGORIES & MODULES)
+// CENTRAL CATEGORY-FIRST DYNAMIC ROUTER
 // =========================================================
 function ToolPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -1121,53 +1114,40 @@ function ToolPage() {
   if (!tool) return <NotFound />;
   const Icon = getIcon(tool.icon);
 
-  // Category Slugs Mapping
-  const textSlugs = ['word-counter','character-counter','case-converter','remove-extra-spaces','text-sorter','duplicate-line-remover','text-reverser','text-cleaner','slug-generator','lorem-ipsum-generator'];
-  const devSlugs = ['qr-code-generator','barcode-generator','password-generator','uuid-generator','random-number-generator','color-picker','hex-to-rgb-converter','timestamp-converter','number-to-words'];
-  const codeSlugs = ['json-formatter','json-minifier','html-formatter','css-formatter','javascript-formatter','xml-formatter','yaml-formatter','base64-encoder-decoder','url-encoder-decoder','text-encrypt-decrypt'];
-  const imageSlugs = ['image-resize','image-compress','jpg-to-png','png-to-jpg','webp-converter','image-crop','image-rotate','image-flip','image-grayscale','image-blur','image-sharpen','image-brightness','image-contrast','image-watermark','favicon-generator'];
+  // 1. Slugs mapped to original built-in components
+  const baseImageSlugs = ['image-resize','image-compress','jpg-to-png','png-to-jpg','webp-converter','image-crop','image-rotate','image-flip','image-grayscale','image-blur','image-sharpen','image-brightness','image-contrast','image-watermark','favicon-generator'];
+  const basePdfSlugs = ['pdf-merge','pdf-split','pdf-compress','pdf-to-images','images-to-pdf','pdf-rotate','pdf-delete-pages','pdf-extract-pages','pdf-watermark','pdf-metadata-remover'];
+  const baseTextSlugs = ['word-counter','character-counter','case-converter','remove-extra-spaces','text-sorter','duplicate-line-remover','text-reverser','text-cleaner','slug-generator','lorem-ipsum-generator'];
+  const baseDevSlugs = ['qr-code-generator','barcode-generator','password-generator','uuid-generator','random-number-generator','color-picker','hex-to-rgb-converter','timestamp-converter','number-to-words'];
+  const baseCodeSlugs = ['json-formatter','json-minifier','html-formatter','css-formatter','javascript-formatter','xml-formatter','yaml-formatter','base64-encoder-decoder','url-encoder-decoder','text-encrypt-decrypt'];
 
-  // Financial Tools Slugs (New Batch 1)
+  // Financial Slugs
   const financialSlugs = [
     'sip-calculator', 'lumpsum-calculator', 'ppf-calculator', 'fd-calculator',
     'rd-calculator', 'cagr-calculator', 'stock-average-calculator', 'hra-calculator',
     'salary-calculator', 'fuel-cost-calculator', 'inflation-calculator',
-    'dividend-yield-calculator', 'calorie-calculator', 'water-intake-calculator', 'tip-calculator'
+    'dividend-yield-calculator', 'calorie-calculator', 'water-intake-calculator', 'tip-calculator',
+    'step-up-sip-calculator', 'swp-calculator', 'gratuity-calculator', 'epf-calculator', 'nps-calculator',
+    'home-loan-prepayment', 'sukanya-samriddhi'
   ];
 
-  // Extra Image Slugs (Batch 2)
-  const extraImageSlugs = ['passport-photo-maker', 'heic-to-jpg', 'svg-to-png', 'meme-generator', 'color-palette-extractor', 'blur-face'];
-  // Advanced PDF Slugs (Batch 3)
-  const advancedPdfSlugs = ['protect-pdf', 'unlock-pdf', 'pdf-page-number', 'pdf-ocr', 'pdf-repair'];
-  // SEO & Text Slugs (Batch 4)
-  const seoTextSlugs = ['text-diff', 'markdown-to-html', 'html-to-markdown', 'keyword-density', 'morse-code'];
-  // Dev & Everyday Slugs (Batch 5)
-  const devUtilitySlugs = ['regex-tester', 'jwt-decoder', 'sql-formatter', 'hash-generator', 'speed-typing-test'];
+  // CATEGORY-FIRST SMART ROUTING (NO FALLBACK ACCIDENTAL CALCULATORS)
+  let toolView;
 
-  // Dynamic Component Selection
-  const toolView = financialSlugs.includes(tool.slug) ? (
-    <FinancialTool tool={tool} />
-  ) : extraImageSlugs.includes(tool.slug) ? (
-    <ExtraImageTool tool={tool} />
-  ) : advancedPdfSlugs.includes(tool.slug) ? (
-    <AdvancedPdfTool tool={tool} />
-  ) : seoTextSlugs.includes(tool.slug) ? (
-    <SeoTextTool tool={tool} />
-  ) : devUtilitySlugs.includes(tool.slug) ? (
-    <DevUtilityTool tool={tool} />
-  ) : textSlugs.includes(tool.slug) ? (
-    <TextTool tool={tool} />
-  ) : devSlugs.includes(tool.slug) ? (
-    <GeneratorTool tool={tool} />
-  ) : codeSlugs.includes(tool.slug) ? (
-    <CodeTool tool={tool} />
-  ) : imageSlugs.includes(tool.slug) ? (
-    <ImageTool tool={tool} />
-  ) : tool.category === 'PDF Tools' ? (
-    <PdfTool tool={tool} />
-  ) : (
-    <BaseCalculatorTool tool={tool} />
-  );
+  if (tool.category === 'Image Tools') {
+    toolView = baseImageSlugs.includes(tool.slug) ? <ImageTool tool={tool} /> : <ExtraImageTool tool={tool} />;
+  } else if (tool.category === 'PDF Tools') {
+    toolView = basePdfSlugs.includes(tool.slug) ? <PdfTool tool={tool} /> : <AdvancedPdfTool tool={tool} />;
+  } else if (tool.category === 'Text Tools') {
+    toolView = baseTextSlugs.includes(tool.slug) ? <TextTool tool={tool} /> : <SeoTextTool tool={tool} />;
+  } else if (tool.category === 'Generators & Developer Utilities') {
+    toolView = baseDevSlugs.includes(tool.slug) ? <GeneratorTool tool={tool} /> : <DevUtilityTool tool={tool} />;
+  } else if (tool.category === 'Converters & Other Utilities') {
+    toolView = baseCodeSlugs.includes(tool.slug) ? <CodeTool tool={tool} /> : <DevUtilityTool tool={tool} />;
+  } else {
+    // Calculators category
+    toolView = financialSlugs.includes(tool.slug) ? <FinancialTool tool={tool} /> : <BaseCalculatorTool tool={tool} />;
+  }
 
   return (
     <Shell>
