@@ -7,6 +7,7 @@ import { Link, Route, Switch, useLocation, useParams, Router as WouterRouter } f
 import {
   ArrowLeft, ArrowLeftRight, ArrowRight, Calculator, Check, Copy, Download, FileText,
   Image as ImageIcon, Menu, Moon, RefreshCcw, Search, ShieldCheck, Sparkles, Sun, Terminal, Type, Upload, X, Zap,
+  Globe, HelpCircle, Lightbulb, CheckCircle2
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { categories, categoryInfo, toolBySlug, tools, type Category, type Tool } from '@/data/tools';
@@ -23,9 +24,7 @@ import {
   transformText,
 } from '@/lib/tool-engine';
 
-// =========================================================
 // MODULAR TOOL IMPORTS
-// =========================================================
 import FinancialTool from '@/components/tools/financial-tools';
 import ExtraImageTool from '@/components/tools/extra-image-tools';
 import AdvancedPdfTool from '@/components/tools/advanced-pdf-tools';
@@ -952,6 +951,7 @@ function ImageTool({ tool }: { tool: Tool }) {
 function ToolPage() {
   const { slug } = useParams<{ slug: string }>();
   const tool = toolBySlug[slug || ''];
+  const [lang, setLang] = useState<'en' | 'hi'>('en');
 
   if (!tool) return <NotFound />;
   const Icon = getIcon(tool.icon);
@@ -975,7 +975,6 @@ function ToolPage() {
   // CATEGORY-FIRST SMART ROUTING
   let toolView;
 
-  // ALL 25 PDF Tools directly powered by AdvancedPdfTool
   if (tool.category === 'PDF Tools') {
     toolView = <AdvancedPdfTool tool={tool} />;
   } else if (tool.category === 'Image Tools') {
@@ -987,7 +986,6 @@ function ToolPage() {
   } else if (tool.category === 'Converters & Other Utilities') {
     toolView = baseCodeSlugs.includes(tool.slug) ? <CodeTool tool={tool} /> : <DevUtilityTool tool={tool} />;
   } else {
-    // Calculators category
     toolView = financialSlugs.includes(tool.slug) ? <FinancialTool tool={tool} /> : <BaseCalculatorTool tool={tool} />;
   }
 
@@ -995,38 +993,154 @@ function ToolPage() {
     <Shell>
       <PageMeta title={tool.name} description={`${tool.description} Free, instant, and runs privately in your browser.`} />
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 md:py-12">
-        <div className="flex items-center gap-4">
-          <span className="grid h-12 w-12 place-items-center rounded-xl bg-primary text-primary-foreground"><Icon size={22} /></span>
-          <div>
-            <h1 className="font-display text-3xl font-bold">{tool.name}</h1>
-            <p className="text-sm text-muted-foreground">{tool.description}</p>
+        {/* Header with Smart Language Switcher */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <span className="grid h-12 w-12 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+              <Icon size={22} />
+            </span>
+            <div>
+              <h1 className="font-display text-2xl font-bold tracking-[-0.03em] sm:text-3xl">{tool.name}</h1>
+              <p className="text-xs text-muted-foreground sm:text-sm">{tool.description}</p>
+            </div>
+          </div>
+
+          {/* Bilingual Switcher */}
+          <div className="flex items-center self-start sm:self-auto rounded-full border border-border bg-card p-1 shadow-xs">
+            <button
+              onClick={() => setLang('en')}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition ${
+                lang === 'en' ? 'bg-primary text-primary-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              🇺🇸 English
+            </button>
+            <button
+              onClick={() => setLang('hi')}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition ${
+                lang === 'hi' ? 'bg-primary text-primary-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              🇮🇳 हिंदी / Hinglish
+            </button>
           </div>
         </div>
 
-        <div className="mt-8 rounded-2xl border border-border bg-card p-5">{toolView}</div>
-
-        <section className="mt-14 max-w-4xl border-t border-border pt-10 text-foreground">
-          <h2 className="font-display text-2xl font-bold">About {tool.name}</h2>
-          <p className="mt-3 text-sm leading-7 text-muted-foreground">
-            {tool.name} is a free, high-performance browser utility designed to help you handle your tasks instantly without installing complex software. All calculations and operations execute entirely in your browser using modern WebAssembly and JavaScript engines, ensuring total privacy for your documents and sensitive inputs.
+        {/* Global Pro-Tip Callout Banner */}
+        <div className="mt-6 flex items-start gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-3.5 sm:items-center">
+          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+            <Lightbulb size={16} />
+          </span>
+          <p className="text-xs font-semibold leading-5 text-foreground sm:text-sm">
+            {lang === 'en' ? (
+              <>
+                <strong>Pro Tip:</strong> All operations execute securely inside your browser using WebAssembly. Your files are never uploaded to any remote server.
+              </>
+            ) : (
+              <>
+                <strong>प्रो-टिप:</strong> यह टूल 100% आपके मोबाइल/कंप्यूटर में ही चलता है। आपकी कोई भी फाइल किसी सर्वर पर अपलोड नहीं होती, डेटा पूरी तरह सुरक्षित है।
+              </>
+            )}
           </p>
+        </div>
 
-          <h3 className="mt-8 font-display text-lg font-bold">How to use {tool.name}</h3>
-          <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm leading-6 text-muted-foreground">
-            <li>Provide your input, values, or select your files in the tool box above.</li>
-            <li>Configure any custom settings or formatting options required for your output.</li>
-            <li>Click the action button to process and copy or download your result instantly.</li>
-          </ol>
+        {/* Core Tool View Card */}
+        <div className="mt-6 rounded-3xl border border-border bg-card p-5 shadow-xs sm:p-7">{toolView}</div>
 
-          <h3 className="mt-8 font-display text-lg font-bold">Frequently Asked Questions</h3>
-          <div className="mt-4 space-y-4">
-            <div className="rounded-xl border border-border bg-card p-4">
-              <p className="font-semibold text-sm">Is {tool.name} completely free to use?</p>
-              <p className="mt-1 text-xs text-muted-foreground leading-5">Yes, all tools on All in One Tools are 100% free with no hidden charges, limitations, or account sign-up requirements.</p>
+        {/* Global + Local Use Cases & Comprehensive Guidance */}
+        <section className="mt-14 max-w-4xl border-t border-border pt-10 text-foreground">
+          {lang === 'en' ? (
+            <div>
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
+                <Globe size={15} /> Comprehensive User Guide
+              </div>
+              <h2 className="mt-2 font-display text-2xl font-bold tracking-tight sm:text-3xl">What is {tool.name} & How it Works</h2>
+              <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                {tool.name} is a high-speed, client-side digital utility designed for professionals, students, and businesses worldwide. Operating directly within your device’s memory sandbox, it eliminates the need for expensive desktop software installations or slow server uploads.
+              </p>
+
+              <h3 className="mt-8 font-display text-lg font-bold">Key Real-World Applications</h3>
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-2xl border border-border bg-card p-4">
+                  <p className="font-bold text-xs uppercase text-primary">Compliance & Legal</p>
+                  <p className="mt-1 text-xs text-muted-foreground leading-5">Format government forms, court e-filings, and international visa applications safely.</p>
+                </div>
+                <div className="rounded-2xl border border-border bg-card p-4">
+                  <p className="font-bold text-xs uppercase text-primary">Business & Work</p>
+                  <p className="mt-1 text-xs text-muted-foreground leading-5">Optimize email attachments, prepare client invoices, and bundle reports in seconds.</p>
+                </div>
+                <div className="rounded-2xl border border-border bg-card p-4">
+                  <p className="font-bold text-xs uppercase text-primary">Academic & Notes</p>
+                  <p className="mt-1 text-xs text-muted-foreground leading-5">Compress college assignments and create 2-in-1 print-friendly pocket study guides.</p>
+                </div>
+              </div>
+
+              <h3 className="mt-8 font-display text-lg font-bold">Step-by-Step Instructions</h3>
+              <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm leading-6 text-muted-foreground">
+                <li>Select or drag-and-drop your document or input data into the box above.</li>
+                <li>Configure your specific parameters (such as compression targets, margins, or rotation angles).</li>
+                <li>Click the primary action button to process and download your optimized file instantly.</li>
+              </ol>
             </div>
-            <div className="rounded-xl border border-border bg-card p-4">
-              <p className="font-semibold text-sm">Is my data secure when using this tool?</p>
-              <p className="mt-1 text-xs text-muted-foreground leading-5">Yes. Unlike server-based online converters, this tool runs 100% client-side inside your local browser sandbox. Your data and files never leave your device.</p>
+          ) : (
+            <div>
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
+                <HelpCircle size={15} /> आसान भाषा में पूरी जानकारी
+              </div>
+              <h2 className="mt-2 font-display text-2xl font-bold tracking-tight sm:text-3xl">{tool.name} क्या काम करता है?</h2>
+              <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                {tool.name} एक बेहद तेज़ और मुफ़्त ऑनलाइन टूल है। इसका सबसे बड़ा फ़ायदा यह है कि यह बिना किसी ऐप को डाउनलोड किए सीधे आपके फ़ोन या कंप्यूटर के ब्राउज़र में तुरंत काम कर देता है।
+              </p>
+
+              <h3 className="mt-8 font-display text-lg font-bold">यह कहाँ-कहाँ सबसे ज़्यादा काम आता है?</h3>
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-2xl border border-border bg-card p-4">
+                  <p className="font-bold text-xs uppercase text-primary">सरकारी व प्रतियोगी परीक्षाएँ</p>
+                  <p className="mt-1 text-xs text-muted-foreground leading-5">SSC, UPSC, रेलवे, पुलिस भर्ती व कॉलेज फॉर्म में तय साइज़ की फ़ाइल अपलोड करने के लिए।</p>
+                </div>
+                <div className="rounded-2xl border border-border bg-card p-4">
+                  <p className="font-bold text-xs uppercase text-primary">साइबर कैफ़े व प्रिंटिंग बचत</p>
+                  <p className="mt-1 text-xs text-muted-foreground leading-5">दुकान या ऑफिस में ज़ेरॉक्स निकालते समय 1 पेज पर 2 पन्ने प्रिंट करके कागज़ और पैसे बचाएँ।</p>
+                </div>
+                <div className="rounded-2xl border border-border bg-card p-4">
+                  <p className="font-bold text-xs uppercase text-primary">WhatsApp व ईमेल शेयरिंग</p>
+                  <p className="mt-1 text-xs text-muted-foreground leading-5">भारी भरकम फाइलों का साइज़ कम करके बिना किसी परेशानी के तुरंत शेयर करने के लिए।</p>
+                </div>
+              </div>
+
+              <h3 className="mt-8 font-display text-lg font-bold">इसे इस्तेमाल कैसे करें? (3 आसान स्टेप्स)</h3>
+              <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm leading-6 text-muted-foreground">
+                <li>ऊपर दिए गए बॉक्स में अपनी फ़ाइल चुनें या इनपुट भरें।</li>
+                <li>अपनी ज़रूरत के अनुसार सेटिंग (जैसे साइज़ या रोटेशन) सेट करें।</li>
+                <li>नीचे दिए गए मुख्य बटन पर क्लिक करके अपनी तैयार फ़ाइल तुरंत डाउनलोड कर लें।</li>
+              </ol>
+            </div>
+          )}
+
+          {/* Frequently Asked Questions */}
+          <h3 className="mt-10 font-display text-lg font-bold">
+            {lang === 'en' ? 'Frequently Asked Questions' : 'अक्सर पूछे जाने वाले सवाल (FAQ)'}
+          </h3>
+          <div className="mt-4 space-y-3">
+            <div className="rounded-2xl border border-border bg-card p-4">
+              <p className="font-semibold text-sm">
+                {lang === 'en' ? 'Is this tool completely free with no limits?' : 'क्या यह टूल सचमुच 100% मुफ़्त है?'}
+              </p>
+              <p className="mt-1.5 text-xs text-muted-foreground leading-5">
+                {lang === 'en'
+                  ? 'Yes, All in One Tools is completely free with zero subscription fees, watermarks, or file limits.'
+                  : 'हाँ, यह टूल बिना किसी छिपे हुए चार्ज, बिना वॉटरमार्क और बिना किसी दैनिक लिमिट के हमेशा के लिए बिल्कुल मुफ़्त है।'}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-border bg-card p-4">
+              <p className="font-semibold text-sm">
+                {lang === 'en' ? 'Are my documents stored on any server?' : 'क्या मेरी फ़ाइलें या डेटा किसी सर्वर पर सुरक्षित रहता है?'}
+              </p>
+              <p className="mt-1.5 text-xs text-muted-foreground leading-5">
+                {lang === 'en'
+                  ? 'No. Unlike traditional converters, our engine operates purely inside your local browser memory. No data is ever transmitted or saved externally.'
+                  : 'नहीं, आपकी कोई भी फ़ाइल हमारे सर्वर पर नहीं जाती। सारा काम आपके डिवाइस की लोकल मेमोरी में ही होता है, इसलिए आपकी प्राइवेसी 100% सेफ है।'}
+              </p>
             </div>
           </div>
         </section>
