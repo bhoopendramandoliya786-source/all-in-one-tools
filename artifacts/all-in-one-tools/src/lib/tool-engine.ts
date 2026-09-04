@@ -4,9 +4,9 @@ export const formatNumber = (value: number) =>
     ? value.toLocaleString('en-IN', { maximumFractionDigits: 2 })
     : '—';
 
-// ==========================================
-// 1. TEXT ENGINES (10 Text Tools)
-// ==========================================
+// =========================================================
+// 1. TEXT ENGINE (10 Tools)
+// =========================================================
 export function transformText(slug: string, input: string, options: Record<string, string> = {}) {
   const lines = input.split(/\r?\n/);
   switch (slug) {
@@ -37,9 +37,13 @@ export function transformText(slug: string, input: string, options: Record<strin
     case 'duplicate-line-remover':
       return [...new Set(lines.map((l) => l.trim()).filter(Boolean))].join('\n');
     case 'text-reverser':
-      return options.mode === 'lines' ? lines.reverse().join('\n') : [...input].reverse().join('');
+      return options.mode === 'lines' ? [...lines].reverse().join('\n') : [...input].reverse().join('');
     case 'text-cleaner':
-      return input.replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+      return input
+        .replace(/[\u200B-\u200D\uFEFF]/g, '')
+        .replace(/[ \t]+/g, ' ')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
     case 'slug-generator':
       return input
         .toLowerCase()
@@ -52,9 +56,9 @@ export function transformText(slug: string, input: string, options: Record<strin
   }
 }
 
-// ==========================================
-// 2. CODE & DEV FORMATTERS (9 Tools)
-// ==========================================
+// =========================================================
+// 2. CODE & FORMATTERS (9 Tools)
+// =========================================================
 export function formatCode(input: string, type: string) {
   const source = input.trim();
   if (!source) return '';
@@ -84,17 +88,26 @@ export function formatCode(input: string, type: string) {
         .join('\n');
     }
     if (type === 'javascript-formatter') {
-      return source.replace(/;\s*/g, ';\n').replace(/\{\s*/g, '{\n  ').replace(/\}\s*/g, '\n}\n');
+      return source
+        .replace(/;\s*/g, ';\n')
+        .replace(/\{\s*/g, '{\n  ')
+        .replace(/\}\s*/g, '\n}\n');
     }
-  } catch (err) {
-    return 'Error: Invalid syntax in input.';
+    if (type === 'yaml-formatter') {
+      return source
+        .split('\n')
+        .map((l) => l.trimEnd())
+        .join('\n');
+    }
+  } catch {
+    return 'Syntax Error: Could not format code.';
   }
   return source;
 }
 
-// ==========================================
-// 3. GENERATORS & UTILITIES
-// ==========================================
+// =========================================================
+// 3. GENERATORS & DEV UTILITIES (10 Tools)
+// =========================================================
 export const makeRandomPassword = (length: number, symbols: boolean, numbers: boolean = true) => {
   let chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
   if (numbers) chars += '23456789';
@@ -137,9 +150,40 @@ export function numberToWords(num: number): string {
   return result.trim();
 }
 
-// ==========================================
-// 4. CALCULATORS & CONVERTERS
-// ==========================================
+export function hexToRgb(hex: string): string {
+  const cleanHex = hex.replace('#', '');
+  if (cleanHex.length !== 3 && cleanHex.length !== 6) return 'Invalid HEX';
+  const fullHex = cleanHex.length === 3 ? cleanHex.split('').map((c) => c + c).join('') : cleanHex;
+  const num = parseInt(fullHex, 16);
+  return `rgb(${num >> 16}, ${(num >> 8) & 255}, ${num & 255})`;
+}
+
+// Text Encryption / Decryption with Passphrase
+export function cipherText(text: string, pass: string, decrypt: boolean = false): string {
+  if (!text || !pass) return text;
+  try {
+    if (!decrypt) {
+      let res = '';
+      for (let i = 0; i < text.length; i++) {
+        res += String.fromCharCode(text.charCodeAt(i) ^ pass.charCodeAt(i % pass.length));
+      }
+      return btoa(res);
+    } else {
+      const decoded = atob(text);
+      let res = '';
+      for (let i = 0; i < decoded.length; i++) {
+        res += String.fromCharCode(decoded.charCodeAt(i) ^ pass.charCodeAt(i % pass.length));
+      }
+      return res;
+    }
+  } catch {
+    return 'Invalid ciphertext or incorrect key.';
+  }
+}
+
+// =========================================================
+// 4. CALCULATORS & CONVERTERS (15 Tools)
+// =========================================================
 export function convertUnits(val: number, type: string, from: string, to: string): number {
   if (from === to) return val;
   if (type === 'length') {
@@ -159,16 +203,30 @@ export function convertUnits(val: number, type: string, from: string, to: string
   return val;
 }
 
-export function hexToRgb(hex: string): string {
-  const cleanHex = hex.replace('#', '');
-  if (cleanHex.length !== 3 && cleanHex.length !== 6) return 'Invalid HEX';
-  const fullHex = cleanHex.length === 3 ? cleanHex.split('').map((c) => c + c).join('') : cleanHex;
-  const num = parseInt(fullHex, 16);
-  return `rgb(${num >> 16}, ${(num >> 8) & 255}, ${num & 255})`;
-}
-
 export function simplifyRatio(w: number, h: number): string {
   const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
   const d = gcd(Math.round(w), Math.round(h));
   return `${Math.round(w) / d} : ${Math.round(h) / d}`;
+}
+
+export function calculateFractions(n1: number, d1: number, n2: number, d2: number, op: string): string {
+  if (d1 === 0 || d2 === 0) return 'Denominator cannot be zero';
+  let num = 0, den = 1;
+  if (op === '+') {
+    num = n1 * d2 + n2 * d1;
+    den = d1 * d2;
+  } else if (op === '-') {
+    num = n1 * d2 - n2 * d1;
+    den = d1 * d2;
+  } else if (op === '*') {
+    num = n1 * n2;
+    den = d1 * d2;
+  } else if (op === '/') {
+    if (n2 === 0) return 'Cannot divide by zero';
+    num = n1 * d2;
+    den = d1 * n2;
+  }
+  const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
+  const common = Math.abs(gcd(num, den));
+  return `${num / common} / ${den / common} (${(num / den).toFixed(3)})`;
 }
