@@ -5,7 +5,7 @@ export const formatNumber = (value: number) =>
     : '—';
 
 // =========================================================
-// 1. TEXT ENGINE (10 Tools)
+// 1. TEXT ENGINE
 // =========================================================
 export function transformText(slug: string, input: string, options: Record<string, string> = {}) {
   const lines = input.split(/\r?\n/);
@@ -57,7 +57,7 @@ export function transformText(slug: string, input: string, options: Record<strin
 }
 
 // =========================================================
-// 2. CODE & FORMATTERS (9 Tools)
+// 2. CODE & FORMATTERS
 // =========================================================
 export function formatCode(input: string, type: string) {
   const source = input.trim();
@@ -106,7 +106,7 @@ export function formatCode(input: string, type: string) {
 }
 
 // =========================================================
-// 3. GENERATORS & DEV UTILITIES (10 Tools)
+// 3. GENERATORS & DEV UTILITIES
 // =========================================================
 export const makeRandomPassword = (length: number, symbols: boolean, numbers: boolean = true) => {
   let chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
@@ -158,7 +158,6 @@ export function hexToRgb(hex: string): string {
   return `rgb(${num >> 16}, ${(num >> 8) & 255}, ${num & 255})`;
 }
 
-// Text Encryption / Decryption with Passphrase
 export function cipherText(text: string, pass: string, decrypt: boolean = false): string {
   if (!text || !pass) return text;
   try {
@@ -182,7 +181,84 @@ export function cipherText(text: string, pass: string, decrypt: boolean = false)
 }
 
 // =========================================================
-// 4. CALCULATORS & CONVERTERS (15 Tools)
+// 4. FINANCIAL & INVESTMENT ENGINE (NEW BATCH 1)
+// =========================================================
+export function calculateSIP(monthly: number, rate: number, years: number) {
+  const n = years * 12;
+  const i = rate / 12 / 100;
+  const totalInvested = monthly * n;
+  const futureValue = monthly * (((1 + i) ** n - 1) / i) * (1 + i);
+  const estimatedReturns = futureValue - totalInvested;
+  return {
+    invested: Math.round(totalInvested),
+    returns: Math.round(estimatedReturns),
+    total: Math.round(futureValue),
+  };
+}
+
+export function calculateLumpsum(investment: number, rate: number, years: number) {
+  const futureValue = investment * (1 + rate / 100) ** years;
+  return {
+    invested: Math.round(investment),
+    returns: Math.round(futureValue - investment),
+    total: Math.round(futureValue),
+  };
+}
+
+export function calculatePPF(annualDeposit: number, rate: number = 7.1, years: number = 15) {
+  let balance = 0;
+  let totalInvested = 0;
+  for (let y = 1; y <= years; y++) {
+    totalInvested += annualDeposit;
+    balance = (balance + annualDeposit) * (1 + rate / 100);
+  }
+  return {
+    invested: Math.round(totalInvested),
+    returns: Math.round(balance - totalInvested),
+    total: Math.round(balance),
+  };
+}
+
+export function calculateStockAverage(
+  q1: number,
+  p1: number,
+  q2: number,
+  p2: number
+) {
+  const totalQty = q1 + q2;
+  if (totalQty <= 0) return { totalQty: 0, totalCost: 0, avgPrice: 0 };
+  const totalCost = q1 * p1 + q2 * p2;
+  return {
+    totalQty,
+    totalCost: Math.round(totalCost),
+    avgPrice: Number((totalCost / totalQty).toFixed(2)),
+  };
+}
+
+export function calculateHRA(
+  basicSalary: number,
+  da: number,
+  hraReceived: number,
+  rentPaid: number,
+  isMetro: boolean
+) {
+  const salary = basicSalary + da;
+  const rule1 = hraReceived;
+  const rule2 = Math.max(0, rentPaid - 0.1 * salary);
+  const rule3 = (isMetro ? 0.5 : 0.4) * salary;
+  const exemptHRA = Math.min(rule1, rule2, rule3);
+  const taxableHRA = Math.max(0, hraReceived - exemptHRA);
+  return { exemptHRA: Math.round(exemptHRA), taxableHRA: Math.round(taxableHRA) };
+}
+
+export function calculateCAGR(startValue: number, endValue: number, years: number) {
+  if (startValue <= 0 || years <= 0) return 0;
+  const cagr = ((endValue / startValue) ** (1 / years) - 1) * 100;
+  return Number(cagr.toFixed(2));
+}
+
+// =========================================================
+// 5. CALCULATORS & CONVERTERS
 // =========================================================
 export function convertUnits(val: number, type: string, from: string, to: string): number {
   if (from === to) return val;
