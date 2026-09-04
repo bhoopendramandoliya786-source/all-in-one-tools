@@ -4,6 +4,9 @@ export const formatNumber = (value: number) =>
     ? value.toLocaleString('en-IN', { maximumFractionDigits: 2 })
     : '—';
 
+// ==========================================
+// 1. TEXT ENGINES (10 Text Tools)
+// ==========================================
 export function transformText(slug: string, input: string, options: Record<string, string> = {}) {
   const lines = input.split(/\r?\n/);
   switch (slug) {
@@ -17,6 +20,11 @@ export function transformText(slug: string, input: string, options: Record<strin
           .toLowerCase()
           .replace(/[^a-zA-Z0-9]+(.)/g, (_, c) => c.toUpperCase())
           .replace(/\s/g, '');
+      if (mode === 'snake')
+        return input
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-zA-Z0-9]+/g, '_');
       return input.toLowerCase().replace(/(^\s*\w|[.!?]\s+\w)/g, (c) => c.toUpperCase());
     }
     case 'remove-extra-spaces':
@@ -24,7 +32,7 @@ export function transformText(slug: string, input: string, options: Record<strin
     case 'text-sorter':
       return [...lines]
         .filter(Boolean)
-        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+        .sort((a, b) => (options.order === 'desc' ? b.localeCompare(a) : a.localeCompare(b)))
         .join('\n');
     case 'duplicate-line-remover':
       return [...new Set(lines.map((l) => l.trim()).filter(Boolean))].join('\n');
@@ -44,40 +52,53 @@ export function transformText(slug: string, input: string, options: Record<strin
   }
 }
 
+// ==========================================
+// 2. CODE & DEV FORMATTERS (9 Tools)
+// ==========================================
 export function formatCode(input: string, type: string) {
   const source = input.trim();
   if (!source) return '';
-  if (type === 'json-formatter') return JSON.stringify(JSON.parse(source), null, 2);
-  if (type === 'json-minifier') return JSON.stringify(JSON.parse(source));
-  if (type === 'css-formatter') {
-    return source
-      .replace(/\s*\{\s*/g, ' {\n  ')
-      .replace(/;\s*/g, ';\n  ')
-      .replace(/\s*\}\s*/g, '\n}\n')
-      .trim();
-  }
-  if (type === 'html-formatter' || type === 'xml-formatter') {
-    let depth = 0;
-    return source
-      .replace(/>\s*</g, '><')
-      .split(/(?=<)|(?<=>)/)
-      .filter(Boolean)
-      .map((part) => {
-        const closing = /^<\//.test(part);
-        if (closing) depth = Math.max(0, depth - 1);
-        const line = `${'  '.repeat(depth)}${part.trim()}`;
-        if (/^<[^!/][^>]*[^/]>(?!.*<\/)/.test(part) && !closing) depth += 1;
-        return line;
-      })
-      .join('\n');
+  try {
+    if (type === 'json-formatter') return JSON.stringify(JSON.parse(source), null, 2);
+    if (type === 'json-minifier') return JSON.stringify(JSON.parse(source));
+    if (type === 'css-formatter') {
+      return source
+        .replace(/\s*\{\s*/g, ' {\n  ')
+        .replace(/;\s*/g, ';\n  ')
+        .replace(/\s*\}\s*/g, '\n}\n')
+        .trim();
+    }
+    if (type === 'html-formatter' || type === 'xml-formatter') {
+      let depth = 0;
+      return source
+        .replace(/>\s*</g, '><')
+        .split(/(?=<)|(?<=>)/)
+        .filter(Boolean)
+        .map((part) => {
+          const closing = /^<\//.test(part);
+          if (closing) depth = Math.max(0, depth - 1);
+          const line = `${'  '.repeat(depth)}${part.trim()}`;
+          if (/^<[^!/][^>]*[^/]>(?!.*<\/)/.test(part) && !closing) depth += 1;
+          return line;
+        })
+        .join('\n');
+    }
+    if (type === 'javascript-formatter') {
+      return source.replace(/;\s*/g, ';\n').replace(/\{\s*/g, '{\n  ').replace(/\}\s*/g, '\n}\n');
+    }
+  } catch (err) {
+    return 'Error: Invalid syntax in input.';
   }
   return source;
 }
 
-export const makeRandomPassword = (length: number, symbols: boolean) => {
-  const chars =
-    'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789' +
-    (symbols ? '!@#$%^&*_-+=' : '');
+// ==========================================
+// 3. GENERATORS & UTILITIES
+// ==========================================
+export const makeRandomPassword = (length: number, symbols: boolean, numbers: boolean = true) => {
+  let chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+  if (numbers) chars += '23456789';
+  if (symbols) chars += '!@#$%^&*_-+=';
   const values = new Uint32Array(length);
   crypto.getRandomValues(values);
   return Array.from(values, (n) => chars[n % chars.length]).join('');
@@ -85,24 +106,24 @@ export const makeRandomPassword = (length: number, symbols: boolean) => {
 
 export function numberToWords(num: number): string {
   if (!Number.isFinite(num)) return '';
-  if (num === 0) return 'zero';
-  if (num < 0) return `minus ${numberToWords(-num)}`;
+  if (num === 0) return 'Zero';
+  if (num < 0) return `Minus ${numberToWords(-num)}`;
   const small = [
-    '', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine',
-    'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen',
-    'seventeen', 'eighteen', 'nineteen',
+    '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+    'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen',
+    'Seventeen', 'Eighteen', 'Nineteen',
   ];
-  const tens = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
   const underThousand = (n: number): string =>
     n < 20
       ? small[n]
       : n < 100
       ? `${tens[Math.floor(n / 10)]}${n % 10 ? `-${small[n % 10]}` : ''}`
-      : `${small[Math.floor(n / 100)]} hundred${n % 100 ? ` ${underThousand(n % 100)}` : ''}`;
+      : `${small[Math.floor(n / 100)]} Hundred${n % 100 ? ` ${underThousand(n % 100)}` : ''}`;
   const chunks = [
-    [1e9, 'billion'],
-    [1e6, 'million'],
-    [1e3, 'thousand'],
+    [1e9, 'Billion'],
+    [1e6, 'Million'],
+    [1e3, 'Thousand'],
     [1, ''],
   ] as [number, string][];
   let result = '';
@@ -116,15 +137,17 @@ export function numberToWords(num: number): string {
   return result.trim();
 }
 
-// Unit Converter
+// ==========================================
+// 4. CALCULATORS & CONVERTERS
+// ==========================================
 export function convertUnits(val: number, type: string, from: string, to: string): number {
   if (from === to) return val;
   if (type === 'length') {
-    const toMeter: Record<string, number> = { m: 1, km: 1000, cm: 0.01, mm: 0.001, inch: 0.0254, ft: 0.3048 };
+    const toMeter: Record<string, number> = { m: 1, km: 1000, cm: 0.01, mm: 0.001, inch: 0.0254, ft: 0.3048, mile: 1609.34 };
     return (val * (toMeter[from] || 1)) / (toMeter[to] || 1);
   }
   if (type === 'weight') {
-    const toKg: Record<string, number> = { kg: 1, g: 0.001, mg: 0.000001, lb: 0.453592, oz: 0.0283495 };
+    const toKg: Record<string, number> = { kg: 1, g: 0.001, mg: 0.000001, lb: 0.453592, oz: 0.0283495, quintal: 100 };
     return (val * (toKg[from] || 1)) / (toKg[to] || 1);
   }
   if (type === 'temperature') {
@@ -136,7 +159,6 @@ export function convertUnits(val: number, type: string, from: string, to: string
   return val;
 }
 
-// HEX to RGB
 export function hexToRgb(hex: string): string {
   const cleanHex = hex.replace('#', '');
   if (cleanHex.length !== 3 && cleanHex.length !== 6) return 'Invalid HEX';
@@ -145,7 +167,6 @@ export function hexToRgb(hex: string): string {
   return `rgb(${num >> 16}, ${(num >> 8) & 255}, ${num & 255})`;
 }
 
-// Ratio Simplifier
 export function simplifyRatio(w: number, h: number): string {
   const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
   const d = gcd(Math.round(w), Math.round(h));
