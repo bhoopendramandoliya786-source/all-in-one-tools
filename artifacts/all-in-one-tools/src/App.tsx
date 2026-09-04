@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, lazy, Suspense } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
@@ -540,8 +540,14 @@ function GeneratorTool({ tool }: { tool: Tool }) {
       setResult(numberToWords(num));
     } else if (tool.slug === 'qr-code-generator') {
       if (!value.trim()) { setError('Enter text or URL.'); return; }
-      const QRCode = (await import('qrcode')).default;
-      QRCode.toDataURL(value.trim(), { margin: 2, width: 720 }).then(setResultUrl).catch(() => setError('Failed to generate QR code.'));
+      try {
+        const QRCode = (await import('qrcode')).default;
+        const url = await QRCode.toDataURL(value.trim(), { margin: 2, width: 720 });
+        setResult('QR code ready');
+        setResultUrl(url);
+      } catch {
+        setError('Failed to generate QR code.');
+      }
     } else if (tool.slug === 'barcode-generator') {
       if (!value.trim()) { setError('Enter barcode value.'); return; }
       try {
@@ -549,6 +555,7 @@ function GeneratorTool({ tool }: { tool: Tool }) {
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         JsBarcode(svg, value.trim(), { format: 'CODE128', displayValue: true, height: 100 });
         const serialized = new XMLSerializer().serializeToString(svg);
+        setResult('Barcode ready');
         setResultUrl(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(serialized)}`);
       } catch { setError('Barcode generation failed.'); }
     }
@@ -562,7 +569,12 @@ function GeneratorTool({ tool }: { tool: Tool }) {
       </div>
       {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
       {result && <ResultBox result={result} onCopy={() => navigator.clipboard.writeText(result)} onDownload={() => downloadText(`${tool.slug}.txt`, result)} />}
-      {resultUrl && <img src={resultUrl} alt="Result" className="mt-4 max-h-60 rounded-xl border bg-white p-2" />}
+      {resultUrl && (
+        <div className="mt-4">
+          <img src={resultUrl} alt="Result" className="max-h-60 rounded-xl border bg-white p-2" />
+          <a href={resultUrl} download={`${tool.slug}.${tool.slug === 'barcode-generator' ? 'svg' : 'png'}`} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground"><Download size={14} /> Download Image</a>
+        </div>
+      )}
     </div>
   );
 }
@@ -570,18 +582,29 @@ function GeneratorTool({ tool }: { tool: Tool }) {
 function CodeTool({ tool }: { tool: Tool }) {
   const [input, setInput] = useState('');
   const [result, setResult] = useState('');
+  const [error, setError] = useState('');
+
   const run = () => {
     try {
+      setError('');
       let out = input;
       if (tool.slug === 'json-formatter' || tool.slug === 'json-minifier') out = formatCode(input, tool.slug);
-      else if (tool.slug === 'base64-encoder-decoder') out = btoa(input);
+      else if (tool.slug === 'base64-encoder-decoder') out = input.startsWith('encoded:') ? atob(input.slice(8)) : `encoded:${btoa(input)}`;
+      else if (tool.slug === 'url-encoder-decoder') out = decodeURIComponent(input) === input ? encodeURIComponent(input) : decodeURIComponent(input);
       setResult(out);
-    } catch { setResult('Invalid Input'); }
+    } catch {
+      setError('Invalid code syntax or format.');
+    }
   };
+
   return (
     <div className="max-w-2xl">
       <textarea value={input} onChange={(e) => setInput(e.target.value)} className="min-h-[220px] w-full rounded-xl border p-3 font-mono-app text-sm" placeholder="Paste code..." />
-      <button onClick={run} className="mt-3 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">Format</button>
+      <div className="mt-3 flex gap-2">
+        <button onClick={run} className="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">Format / Run</button>
+        <button onClick={() => { setInput(''); setResult(''); setError(''); }} className="rounded-xl border px-4 py-3 text-sm font-bold text-muted-foreground">Reset</button>
+      </div>
+      {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
       {result && <ResultBox result={result} onCopy={() => navigator.clipboard.writeText(result)} onDownload={() => downloadText(`${tool.slug}.txt`, result)} />}
     </div>
   );
@@ -590,45 +613,192 @@ function CodeTool({ tool }: { tool: Tool }) {
 function ImageTool({ tool }: { tool: Tool }) {
   const [file, setFile] = useState<File | null>(null);
   const [resultUrl, setResultUrl] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [width, setWidth] = useState('800');
+  const [height, setHeight] = useState('600');
+  const [quality, setQuality] = useState('0.8');
+
   const process = () => {
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    setResultUrl(url);
+    if (!file) { setError('Choose an image first.'); return; }
+    setBusy(true); setError('');
+    const img = new Image();
+    const sourceUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      const outputWidth = (tool.slug === 'image-crop' || tool.slug === 'image-resize') ? Number(width) || img.width : img.width;
+      const outputHeight = (tool.slug === 'image-crop' || tool.slug === 'image-resize') ? Number(height) || img.height : img.height;
+      const canvas = document.createElement('canvas');
+      canvas.width = outputWidth;
+      canvas.height = outputHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { setError('Canvas context unavailable'); setBusy(false); return; }
+      if (tool.slug === 'image-grayscale') ctx.filter = 'grayscale(1)';
+      else if (tool.slug === 'image-blur') ctx.filter = 'blur(4px)';
+      ctx.drawImage(img, 0, 0, outputWidth, outputHeight);
+      const outType = tool.slug === 'png-to-jpg' ? 'image/jpeg' : tool.slug === 'webp-converter' ? 'image/webp' : 'image/png';
+      setResultUrl(canvas.toDataURL(outType, Number(quality) || 0.8));
+      URL.revokeObjectURL(sourceUrl);
+      setBusy(false);
+    };
+    img.onerror = () => { setError('Failed to read image.'); setBusy(false); };
+    img.src = sourceUrl;
   };
+
   return (
     <div className="max-w-2xl">
-      <label className="flex min-h-[160px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card p-4">
+      <label className="flex min-h-[160px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card p-4 hover:border-primary/60">
         <input type="file" accept="image/*" className="sr-only" onChange={(e) => setFile(e.target.files?.[0] || null)} />
         <Upload size={24} className="text-primary" />
         <span className="mt-2 text-sm font-bold">{file ? file.name : 'Choose an image'}</span>
       </label>
-      <button onClick={process} className="mt-4 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">Process</button>
-      {resultUrl && <img src={resultUrl} alt="Result" className="mt-4 max-h-60 rounded-xl" />}
+      {(tool.slug === 'image-resize' || tool.slug === 'image-crop') && (
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <Field label="Width" value={width} onChange={setWidth} type="number" />
+          <Field label="Height" value={height} onChange={setHeight} type="number" />
+        </div>
+      )}
+      <div className="mt-4 flex gap-2">
+        <button onClick={process} disabled={busy} className="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground disabled:opacity-50">
+          {busy ? 'Processing...' : 'Process image'}
+        </button>
+      </div>
+      {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+      {resultUrl && (
+        <div className="mt-5 rounded-xl border border-border p-4">
+          <img src={resultUrl} alt="Result" className="max-h-72 rounded-xl object-contain" />
+          <a href={resultUrl} download={`${tool.slug}-result.png`} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground"><Download size={14} /> Download Image</a>
+        </div>
+      )}
     </div>
   );
 }
 
+function parsePageSelection(value: string, total: number) {
+  const pages = new Set<number>();
+  value.split(',').map((p) => p.trim()).filter(Boolean).forEach((part) => {
+    const [start, end] = part.split('-').map((n) => Number(n.trim()));
+    if (Number.isInteger(start) && start >= 1) {
+      const e = Number.isInteger(end) ? Math.min(total, end) : start;
+      for (let i = start; i <= e; i++) if (i <= total) pages.add(i - 1);
+    }
+  });
+  return [...pages].sort((a, b) => a - b);
+}
+
 function PdfTool({ tool }: { tool: Tool }) {
   const [files, setFiles] = useState<File[]>([]);
-  const [status, setStatus] = useState('');
+  const [pages, setPages] = useState('1');
+  const [watermark, setWatermark] = useState('CONFIDENTIAL');
+  const [results, setResults] = useState<{ name: string; url: string }[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
   const process = async () => {
-    if (!files.length) return;
-    setStatus('Processing locally...');
+    setError('');
+    setResults([]);
+    if (!files.length) { setError('Select at least one PDF file.'); return; }
+    setBusy(true);
+
     try {
-      const { PDFDocument } = await import('pdf-lib');
-      const doc = await PDFDocument.create();
-      setStatus('Done!');
-    } catch { setStatus('Error processing PDF'); }
+      const { PDFDocument, StandardFonts, rgb, degrees } = await import('pdf-lib');
+      
+      if (tool.slug === 'pdf-merge') {
+        const mergedPdf = await PDFDocument.create();
+        for (const file of files) {
+          const doc = await PDFDocument.load(await file.arrayBuffer());
+          const copied = await mergedPdf.copyPages(doc, doc.getPageIndices());
+          copied.forEach((p) => mergedPdf.addPage(p));
+        }
+        const bytes = await mergedPdf.save();
+        setResults([{ name: 'merged-document.pdf', url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
+      } else {
+        const source = await PDFDocument.load(await files[0].arrayBuffer());
+        if (tool.slug === 'pdf-split') {
+          const selected = parsePageSelection(pages, source.getPageCount());
+          if (!selected.length) throw new Error('Specify pages like 1 or 1-3.');
+          const splitResults = [];
+          for (const [idx, pageIdx] of selected.entries()) {
+            const out = await PDFDocument.create();
+            const [copied] = await out.copyPages(source, [pageIdx]);
+            out.addPage(copied);
+            const bytes = await out.save();
+            splitResults.push({ name: `split-page-${idx + 1}.pdf`, url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) });
+          }
+          setResults(splitResults);
+        } else if (tool.slug === 'pdf-rotate') {
+          source.getPages().forEach((p) => p.setRotation(degrees((p.getRotation().angle + 90) % 360)));
+          const bytes = await source.save();
+          setResults([{ name: 'rotated.pdf', url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
+        } else if (tool.slug === 'pdf-watermark') {
+          const font = await source.embedFont(StandardFonts.HelveticaBold);
+          source.getPages().forEach((p) => {
+            const { width, height } = p.getSize();
+            p.drawText(watermark || 'CONFIDENTIAL', { x: width * 0.2, y: height * 0.5, size: 40, font, rotate: degrees(45), color: rgb(0.7, 0.7, 0.7), opacity: 0.35 });
+          });
+          const bytes = await source.save();
+          setResults([{ name: 'watermarked.pdf', url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
+        } else {
+          const bytes = await source.save({ useObjectStreams: true });
+          setResults([{ name: `${tool.slug}.pdf`, url: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) }]);
+        }
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Failed to process PDF.');
+    } finally {
+      setBusy(false);
+    }
   };
+
+  const reset = () => {
+    results.forEach((r) => URL.revokeObjectURL(r.url));
+    setResults([]);
+    setFiles([]);
+    setError('');
+  };
+
   return (
     <div className="max-w-2xl">
-      <label className="flex min-h-[160px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card p-4">
-        <input type="file" accept=".pdf" multiple onChange={(e) => setFiles(Array.from(e.target.files || []))} className="sr-only" />
+      <label className="flex min-h-[160px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card p-4 hover:border-primary/60">
+        <input type="file" accept=".pdf" multiple={tool.slug === 'pdf-merge'} onChange={(e) => setFiles(Array.from(e.target.files || []))} className="sr-only" />
         <Upload size={24} className="text-primary" />
-        <span className="mt-2 text-sm font-bold">{files.length ? `${files.length} file(s) selected` : 'Select PDF'}</span>
+        <span className="mt-2 text-sm font-bold">{files.length ? `${files.length} file(s) selected` : 'Choose PDF file(s)'}</span>
       </label>
-      <button onClick={process} className="mt-4 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">{tool.name}</button>
-      {status && <p className="mt-2 text-sm font-semibold">{status}</p>}
+
+      {files.length > 0 && (
+        <div className="mt-3 space-y-1">
+          {files.map((f, i) => <p key={i} className="text-xs text-muted-foreground truncate">📄 {f.name}</p>)}
+        </div>
+      )}
+
+      {tool.slug === 'pdf-split' && (
+        <div className="mt-4"><Field label="Pages to extract" value={pages} onChange={setPages} placeholder="e.g. 1, 3-5" /></div>
+      )}
+      {tool.slug === 'pdf-watermark' && (
+        <div className="mt-4"><Field label="Watermark Text" value={watermark} onChange={setWatermark} /></div>
+      )}
+
+      <div className="mt-4 flex gap-2">
+        <button onClick={process} disabled={busy} className="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground disabled:opacity-50">
+          {busy ? 'Processing...' : tool.name}
+        </button>
+        <button onClick={reset} className="rounded-xl border border-border px-4 py-3 text-sm font-bold text-muted-foreground hover:text-foreground">Reset</button>
+      </div>
+
+      {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+
+      {results.length > 0 && (
+        <div className="mt-5 rounded-xl border border-primary/30 bg-primary/5 p-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-primary">Ready to download</p>
+          {results.map((res, i) => (
+            <div key={i} className="mt-2 flex items-center justify-between">
+              <span className="text-sm font-semibold truncate">{res.name}</span>
+              <a href={res.url} download={res.name} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-bold text-primary-foreground">
+                <Download size={14} /> Download PDF
+              </a>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
